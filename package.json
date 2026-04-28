@@ -1,0 +1,47 @@
+{
+  "name": "vaultbase",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for Vaultbase — typed REST + WS/SSE client",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./realtime": {
+      "types": "./dist/realtime/index.d.ts",
+      "import": "./dist/realtime/index.js",
+      "require": "./dist/realtime/index.cjs"
+    },
+    "./codegen": {
+      "types": "./dist/codegen/index.d.ts",
+      "import": "./dist/codegen/index.js",
+      "require": "./dist/codegen/index.cjs"
+    }
+  },
+  "bin": {
+    "vb-types": "./dist/codegen/bin.js"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "vaultbaseServerCompat": ">=0.1 <2.0",
+  "scripts": {
+    "build": "tsup",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run typecheck && bun run test && bun run build"
+  },
+  "keywords": ["vaultbase", "baas", "sdk", "typescript", "realtime"],
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "devDependencies": {
+    "@types/bun": "^1.3.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.8.0"
+  },
+  "peerDependencies": {},
+  "sideEffects": false
+}
