@@ -45,13 +45,13 @@ describe("Batch", () => {
     const c = client((req) => {
       // capture body via body in init isn't directly visible — we just confirm path
       void req.url;
-      return new Response(JSON.stringify({ data: { data: [{ status: 201, body: { id: "x" } }] } }), {
+      return new Response(JSON.stringify({ data: [{ status: 201, body: { id: "x" } }] }), {
         headers: { "content-type": "application/json" },
       });
     });
     const b = new Batch(c).create("posts", { title: "x" });
     const r = await b.run();
-    expect(r.data[0]?.status).toBe(201);
+    expect(r[0]?.status).toBe(201);
     void body;
   });
 });

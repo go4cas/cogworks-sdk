@@ -169,9 +169,14 @@ export class HttpClient {
     if (res.status === 409) throw VaultbaseError.conflict(409, extractMessage(data) ?? "Conflict");
     if (!res.ok) throw VaultbaseError.server(res.status, extractMessage(data) ?? `HTTP ${res.status}`, data);
 
-    // Server returns { data: T } envelope for most endpoints.
+    // Server uses a `{ data: T }` envelope for single-result endpoints. List
+    // endpoints return the page envelope `{ data: T[], page, perPage, ... }`
+    // directly — those must NOT be unwrapped or the page metadata is lost.
     if (data && typeof data === "object" && "data" in (data as Record<string, unknown>)) {
-      return (data as { data: T }).data;
+      const obj = data as Record<string, unknown>;
+      const ENVELOPE_KEYS = new Set(["data", "error", "code", "details"]);
+      const hasOtherKeys = Object.keys(obj).some((k) => !ENVELOPE_KEYS.has(k));
+      if (!hasOtherKeys) return obj["data"] as T;
     }
     return data as T;
   }
