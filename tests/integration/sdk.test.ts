@@ -30,7 +30,7 @@ d("integration — SDK ↔ live Vaultbase", () => {
     vb.client.authStore.set({ token: server.adminToken });
 
     // Seed a `posts` collection used by every test below.
-    await vb.client.request("/api/collections", {
+    await vb.client.request("/api/v1/collections", {
       method: "POST",
       body: {
         name: "posts",
@@ -103,7 +103,7 @@ d("integration — SDK ↔ live Vaultbase", () => {
     const meta = await vb.files.upload("posts", post.id, "cover", blob);
     const m = Array.isArray(meta) ? meta[0]! : meta;
     expect(m.filename).toBeTruthy();
-    expect(vb.files.url(m.filename)).toContain("/api/files/");
+    expect(vb.files.url(m.filename)).toContain("/api/v1/files/");
     await vb.files.delete("posts", post.id, "cover", m.filename);
   });
 
@@ -126,7 +126,7 @@ d("integration — SDK ↔ live Vaultbase", () => {
   });
 
   it("codegen: generates compilable types from the live snapshot", async () => {
-    const snap = await vb.client.request<SnapshotShape>("/api/admin/migrations/snapshot");
+    const snap = await vb.client.request<SnapshotShape>("/api/v1/admin/migrations/snapshot");
     const ts = generateTypes(snap);
     expect(ts).toContain("export type Schema = {");
     expect(ts).toContain("PostsRecord");
@@ -141,7 +141,7 @@ d("integration — SDK ↔ live Vaultbase", () => {
       withCredentials: false,
     });
     try {
-      await anon.client.request("/api/admin/auth/me");
+      await anon.client.request("/api/v1/admin/auth/me");
       throw new Error("should have rejected");
     } catch (e) {
       const err = e as { kind?: string };

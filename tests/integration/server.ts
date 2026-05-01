@@ -74,18 +74,18 @@ export async function startTestServer(): Promise<Started> {
   if (!port) throw new Error("server failed to bind a port");
   const baseUrl = `http://localhost:${port}`;
 
-  // Seed the admin via /api/admin/setup so subsequent SDK calls have a real
+  // Seed the admin via /api/v1/admin/setup so subsequent SDK calls have a real
   // principal to log in as.
   const adminEmail = "admin@test.local";
   const adminPassword = "integration-test-password";
-  const setup = await fetch(`${baseUrl}/api/admin/setup`, {
+  const setup = await fetch(`${baseUrl}/api/v1/admin/setup`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ email: adminEmail, password: adminPassword }),
   });
   if (!setup.ok) throw new Error(`setup failed: ${setup.status} ${await setup.text()}`);
 
-  const login = await fetch(`${baseUrl}/api/admin/auth/login`, {
+  const login = await fetch(`${baseUrl}/api/v1/admin/auth/login`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ email: adminEmail, password: adminPassword }),

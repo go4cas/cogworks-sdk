@@ -56,7 +56,7 @@ describe("HttpClient ETag capture", () => {
     const { client } = makeClient(() => new Response(JSON.stringify({ data: { id: "p1" } }), {
       headers: { "content-type": "application/json", etag: `W/"42"` },
     }));
-    await client.request("/api/posts/p1");
+    await client.request("/api/v1/posts/p1");
     expect(client.etags.get("posts", "p1")).toBe(`W/"42"`);
   });
 
@@ -64,7 +64,7 @@ describe("HttpClient ETag capture", () => {
     const { client } = makeClient(() => new Response(JSON.stringify({ data: [] }), {
       headers: { "content-type": "application/json", etag: `W/"99"` },
     }));
-    await client.request("/api/posts");
+    await client.request("/api/v1/posts");
     expect(client.etags.get("posts", "")).toBeUndefined();
   });
 
@@ -72,7 +72,7 @@ describe("HttpClient ETag capture", () => {
     const { client } = makeClient(() => new Response(JSON.stringify({ data: [] }), {
       headers: { "content-type": "application/json", etag: `W/"99"` },
     }));
-    await client.request("/api/posts/p1/history");
+    await client.request("/api/v1/posts/p1/history");
     expect(client.etags.get("posts", "p1")).toBeUndefined();
   });
 });

@@ -34,7 +34,7 @@ describe("HttpClient.request", () => {
     const c = makeClient(() => new Response(JSON.stringify({ data: { id: "x" } }), {
       headers: { "content-type": "application/json" },
     }));
-    const r = await c.request<{ id: string }>("/api/posts");
+    const r = await c.request<{ id: string }>("/api/v1/posts");
     expect(r.id).toBe("x");
   });
 
@@ -44,7 +44,7 @@ describe("HttpClient.request", () => {
       { status: 422, headers: { "content-type": "application/json" } },
     ));
     try {
-      await c.request("/api/posts", { method: "POST", body: {} });
+      await c.request("/api/v1/posts", { method: "POST", body: {} });
       throw new Error("should have thrown");
     } catch (e) {
       expect(e instanceof VaultbaseError).toBe(true);
@@ -62,7 +62,7 @@ describe("HttpClient.request", () => {
       headers: { "retry-after": "2", "content-type": "application/json" },
     }));
     try {
-      await c.request("/api/x");
+      await c.request("/api/v1/x");
     } catch (e) {
       expect(e instanceof VaultbaseError).toBe(true);
       const err = e as VaultbaseError;
@@ -86,7 +86,7 @@ describe("HttpClient.request", () => {
         }));
       }) as typeof fetch,
     });
-    await c.request("/api/x");
+    await c.request("/api/v1/x");
     expect(captured).toBe("Bearer tok-123");
   });
 
@@ -96,8 +96,8 @@ describe("HttpClient.request", () => {
       req.signal?.addEventListener("abort", () => { aborts++; resolve(new Response("", { status: 499 })); });
       // never resolve unless aborted
     }));
-    const p1 = c.request("/api/x", { requestKey: "k" }).catch(() => "aborted");
-    const p2 = c.request("/api/x", { requestKey: "k" }).catch(() => "aborted");
+    const p1 = c.request("/api/v1/x", { requestKey: "k" }).catch(() => "aborted");
+    const p2 = c.request("/api/v1/x", { requestKey: "k" }).catch(() => "aborted");
     void p1;
     void p2;
     // give the scheduler a tick so the second acquire fires the abort

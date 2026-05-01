@@ -150,7 +150,8 @@ export class HttpClient {
   private captureEtag(path: string, res: Response): void {
     const etag = res.headers.get("etag");
     if (!etag) return;
-    const m = /^\/api\/([^/?#]+)\/([^/?#]+)(?:\?[^#]*)?$/.exec(path);
+    // Accept both versioned (/api/v1/<col>/<id>) and legacy (/api/<col>/<id>).
+    const m = /^\/api\/(?:v\d+\/)?([^/?#]+)\/([^/?#]+)(?:\?[^#]*)?$/.exec(path);
     if (!m) return;
     const [, collection, id] = m;
     if (!collection || !id) return;

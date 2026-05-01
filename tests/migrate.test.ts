@@ -22,7 +22,7 @@ function mockFetch(handler: (url: string, init?: RequestInit) => Response): type
 describe("migrate API", () => {
   it("pullSnapshot returns the server's snapshot envelope", async () => {
     const fetch = mockFetch((url) => {
-      expect(url).toBe("https://target.example/api/admin/migrations/snapshot");
+      expect(url).toBe("https://target.example/api/v1/admin/migrations/snapshot");
       return new Response(JSON.stringify(sampleSnapshot), {
         headers: { "content-type": "application/json" },
       });
@@ -44,7 +44,7 @@ describe("migrate API", () => {
   it("diffSnapshot POSTs the snapshot and returns parsed entries", async () => {
     let capturedBody: string | undefined;
     const fetch = mockFetch((url, init) => {
-      expect(url).toBe("https://x/api/admin/migrations/diff");
+      expect(url).toBe("https://x/api/v1/admin/migrations/diff");
       capturedBody = init?.body as string;
       return new Response(JSON.stringify({
         data: [
