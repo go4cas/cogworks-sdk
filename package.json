@@ -1,5 +1,5 @@
 {
-  "name": "@vaultbase-sh/sdk",
+  "name": "@vaultbase/sdk",
   "version": "0.3.0",
   "description": "Official TypeScript SDK for Vaultbase — typed REST + WS/SSE client",
   "type": "module",
