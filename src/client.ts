@@ -53,11 +53,29 @@ export function decodeJwtPayload(token: string): JwtClaims | null {
 
 const REFRESH_LEAD_SECONDS = 60;
 
+/**
+ * Per-record ETag cache used for optimistic concurrency. Populated whenever
+ * the SDK sees an `ETag` response header on a `/api/<collection>/<id>` path,
+ * and consumed by `Collection.update` / `.delete` to auto-attach `If-Match`.
+ *
+ * In-memory only — pinned to the client instance, so concurrent `Vaultbase`
+ * objects don't share state. SDK consumers can clear via `vb.client.etags.clear()`.
+ */
+export class EtagCache {
+  private readonly map = new Map<string, string>();
+  get(collection: string, id: string): string | undefined { return this.map.get(`${collection}:${id}`); }
+  set(collection: string, id: string, etag: string): void { this.map.set(`${collection}:${id}`, etag); }
+  delete(collection: string, id: string): void { this.map.delete(`${collection}:${id}`); }
+  clear(): void { this.map.clear(); }
+}
+
 export class HttpClient {
   readonly baseUrl: string;
   readonly authStore: AuthStore;
   readonly cancel = new CancelRegistry();
   readonly refresher: RefreshCoordinator;
+  /** Per-record ETag cache, populated/consumed automatically by the SDK. */
+  readonly etags = new EtagCache();
   private readonly fetcher: typeof fetch;
   private readonly defaultAutoCancel: boolean;
   private readonly withCredentials: boolean;
@@ -119,7 +137,24 @@ export class HttpClient {
       if (cancelKey && signal) this.cancel.release(cancelKey, signal);
     }
 
+    this.captureEtag(path, res);
     return await this.handleResponse<T>(res, path, options);
+  }
+
+  /**
+   * Inspect a response for `ETag` and stash it in {@link etags} when the path
+   * targets a single-record endpoint (`/api/<collection>/<id>`). Subpaths
+   * (`.../history`, `.../restore`, `.../oauth2/...`) and list endpoints
+   * (`/api/<collection>`) are ignored.
+   */
+  private captureEtag(path: string, res: Response): void {
+    const etag = res.headers.get("etag");
+    if (!etag) return;
+    const m = /^\/api\/([^/?#]+)\/([^/?#]+)(?:\?[^#]*)?$/.exec(path);
+    if (!m) return;
+    const [, collection, id] = m;
+    if (!collection || !id) return;
+    this.etags.set(decodeURIComponent(collection), decodeURIComponent(id), etag);
   }
 
   /** Build a URL with a query-string. Skips undefined values. */
@@ -167,6 +202,10 @@ export class HttpClient {
       throw VaultbaseError.validation(extractMessage(data) ?? "Validation failed", details);
     }
     if (res.status === 409) throw VaultbaseError.conflict(409, extractMessage(data) ?? "Conflict");
+    if (res.status === 412) {
+      const etag = res.headers.get("etag") ?? undefined;
+      throw VaultbaseError.preconditionFailed(extractMessage(data) ?? "Precondition Failed", etag);
+    }
     if (!res.ok) throw VaultbaseError.server(res.status, extractMessage(data) ?? `HTTP ${res.status}`, data);
 
     // Server uses a `{ data: T }` envelope for single-result endpoints. List

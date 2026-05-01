@@ -9,6 +9,7 @@ export type ErrorKind =
   | "validation"
   | "rate_limit"
   | "conflict"
+  | "precondition_failed"
   | "server"
   | "aborted";
 
@@ -19,6 +20,13 @@ export interface RateLimitErrorData  { kind: "rate_limit"; message: string; retr
 export interface ConflictErrorData   { kind: "conflict"; message: string; serverCode: 409 | 422 }
 export interface ServerErrorData     { kind: "server"; message: string; status: number; body?: unknown }
 export interface AbortedErrorData    { kind: "aborted"; message: string }
+/** 412 Precondition Failed — `If-Match` ETag did not match the server's record. */
+export interface PreconditionFailedErrorData {
+  kind: "precondition_failed";
+  message: string;
+  /** The server's current ETag (when echoed). */
+  currentEtag?: string;
+}
 
 export type VaultbaseErrorData =
   | NetworkErrorData
@@ -26,6 +34,7 @@ export type VaultbaseErrorData =
   | ValidationErrorData
   | RateLimitErrorData
   | ConflictErrorData
+  | PreconditionFailedErrorData
   | ServerErrorData
   | AbortedErrorData;
 
@@ -61,6 +70,11 @@ export class VaultbaseError extends Error {
   }
   static aborted(message = "Request aborted"): VaultbaseError {
     return new VaultbaseError({ kind: "aborted", message });
+  }
+  static preconditionFailed(message = "Precondition Failed", currentEtag?: string): VaultbaseError {
+    const data: PreconditionFailedErrorData = { kind: "precondition_failed", message };
+    if (currentEtag !== undefined) data.currentEtag = currentEtag;
+    return new VaultbaseError(data);
   }
 }
 

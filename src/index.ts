@@ -4,8 +4,10 @@ import { Files } from "./files.ts";
 import { Batch } from "./batch.ts";
 import { Custom } from "./custom.ts";
 import { RealtimeManager } from "./realtime/manager.ts";
+import { FlagsClient } from "./flags/manager.ts";
 import { AdminAuth, CollectionAuth, SharedAuth } from "./auth/flows.ts";
 import { defaultAuthStore, type AuthStore } from "./auth/store.ts";
+import { q, field, rawFilter, type Filter } from "./filter.ts";
 import type {
   AnyRecord,
   CollectionTypes,
@@ -35,6 +37,7 @@ export class Vaultbase<S extends DefaultSchema = DefaultSchema> {
   readonly files: Files;
   readonly custom: Custom;
   readonly realtime: RealtimeManager;
+  readonly flags: FlagsClient;
 
   constructor(opts: VaultbaseOptions) {
     const authStore: AuthStore = opts.authStore ?? defaultAuthStore();
@@ -49,19 +52,33 @@ export class Vaultbase<S extends DefaultSchema = DefaultSchema> {
     this.files = new Files(this.client);
     this.custom = new Custom(this.client);
     this.realtime = new RealtimeManager(this.client);
+    this.flags = new FlagsClient(this.client);
   }
 
   /** Fetch a typed collection accessor. */
   collection<K extends keyof S & string>(name: K): CollectionFor<S[K]>;
-  collection<R extends AnyRecord = AnyRecord, C extends AnyRecord = AnyRecord, U extends AnyRecord = AnyRecord>(
+  collection<R = AnyRecord, C = AnyRecord, U = AnyRecord>(
     name: string,
   ): Collection<R, C, U>;
   collection(name: string): Collection {
     return new Collection(this.client, name);
   }
 
-  /** Build a fresh batch (max 100 ops, server-enforced). */
-  batch(): Batch { return new Batch(this.client); }
+  /** Build a fresh batch (max 100 ops, server-enforced). Per-op result types
+   * are inferred from chained calls when a `Schema` generic is supplied. */
+  batch(): Batch<S> { return new Batch<S>(this.client); }
+
+  /**
+   * Tagged-template filter builder. Interpolated values are escaped + quoted
+   * per the server's filter expression grammar. See `./filter.ts` for the
+   * encoding rules and the {@link field} escape hatch.
+   *
+   *   const filter = vb.q\`title ~ \${term} && status = \${"published"}\`;
+   *   posts.list({ filter });
+   */
+  readonly q = q;
+  /** Re-export for ergonomic access via the `vb.field("status")` form. */
+  readonly field = field;
 
   /** Subscribe to a collection's realtime events. Returns an unsubscribe function. */
   subscribe<K extends keyof S & string>(
@@ -121,12 +138,15 @@ function createAuth<S extends DefaultSchema>(client: HttpClient): AuthInterface<
 
 // ── Public re-exports ───────────────────────────────────────────────────────
 
-export { HttpClient } from "./client.ts";
+export { HttpClient, EtagCache } from "./client.ts";
 export { Collection } from "./collection.ts";
 export { Files } from "./files.ts";
-export { Batch } from "./batch.ts";
+export { Batch, type BatchOpResult, type BatchDeleteResult, type BatchResult } from "./batch.ts";
 export { Custom } from "./custom.ts";
+export { q, field, rawFilter, type Filter } from "./filter.ts";
 export { RealtimeManager } from "./realtime/manager.ts";
+export { FlagsClient } from "./flags/manager.ts";
+export type { FlagsConnectOptions, FlagsChangeListener, FlagValue } from "./flags/manager.ts";
 export {
   AdminAuth,
   CollectionAuth,

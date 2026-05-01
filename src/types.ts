@@ -15,9 +15,13 @@ export interface CollectionTypes<R = AnyRecord, C = AnyRecord, U = AnyRecord> {
 
 /**
  * Top-level schema map. Defaults to a permissive shape so apps that skip
- * codegen still compile; codegen-emitted versions narrow this.
+ * codegen still compile; codegen-emitted versions narrow this. Uses
+ * bivariant `any` on the per-collection types so user-emitted record
+ * interfaces (which don't carry an index signature) still satisfy this
+ * constraint.
  */
-export type DefaultSchema = Record<string, CollectionTypes>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type DefaultSchema = Record<string, CollectionTypes<any, any, any>>;
 
 /** Server's standard list-response envelope. */
 export interface ListResponse<T> {

@@ -7,6 +7,19 @@ import type {
   MutationOptions,
 } from "./types.ts";
 
+export interface ConcurrencyOptions {
+  /**
+   * Optimistic-concurrency control. Defaults to `"auto"`:
+   *   - `"auto"`: attach `If-Match` from the SDK's per-record ETag cache when present.
+   *   - `string`: an explicit ETag (e.g. from a prior response) to send as `If-Match`.
+   *   - `false`: skip the precondition entirely.
+   */
+  ifMatch?: string | "auto" | false;
+}
+
+export type UpdateOptions = MutationOptions & ConcurrencyOptions;
+export type DeleteOptions = MutationOptions & ConcurrencyOptions;
+
 /**
  * Typed CRUD interface for a single collection. Generic params:
  *   R — the record type (from `Schema[K]['record']`)
@@ -14,9 +27,9 @@ import type {
  *   U — the update-input type (from `Schema[K]['update']`)
  */
 export class Collection<
-  R extends AnyRecord = AnyRecord,
-  C extends AnyRecord = AnyRecord,
-  U extends AnyRecord = AnyRecord,
+  R = AnyRecord,
+  C = AnyRecord,
+  U = AnyRecord,
 > {
   constructor(private readonly client: HttpClient, private readonly name: string) {}
 
@@ -62,19 +75,42 @@ export class Collection<
     });
   }
 
-  async update(id: string, body: U, opts: MutationOptions = {}): Promise<R> {
+  async update(id: string, body: U, opts: UpdateOptions = {}): Promise<R> {
+    const { ifMatch, ...rest } = opts;
+    const headers = this.buildIfMatchHeaders(id, ifMatch);
     return await this.client.request<R>(`/api/${this.encName()}/${enc(id)}`, {
       method: "PATCH",
       body,
-      ...opts,
+      ...rest,
+      ...(headers ? { headers } : {}),
     });
   }
 
-  async delete(id: string, opts: MutationOptions = {}): Promise<null> {
-    return await this.client.request<null>(`/api/${this.encName()}/${enc(id)}`, {
+  async delete(id: string, opts: DeleteOptions = {}): Promise<null> {
+    const { ifMatch, ...rest } = opts;
+    const headers = this.buildIfMatchHeaders(id, ifMatch);
+    const r = await this.client.request<null>(`/api/${this.encName()}/${enc(id)}`, {
       method: "DELETE",
-      ...opts,
+      ...rest,
+      ...(headers ? { headers } : {}),
     });
+    // Successful delete invalidates the ETag entry so a subsequent recreate
+    // doesn't carry the stale tag forward.
+    this.client.etags.delete(this.name, id);
+    return r;
+  }
+
+  /**
+   * Resolve `ifMatch` into the HTTP headers to send. `"auto"` (default) reads
+   * from the client's ETag cache; an explicit string overrides the cache;
+   * `false` disables the precondition entirely.
+   */
+  private buildIfMatchHeaders(id: string, ifMatch: ConcurrencyOptions["ifMatch"]): Record<string, string> | null {
+    if (ifMatch === false) return null;
+    if (typeof ifMatch === "string" && ifMatch.length > 0) return { "If-Match": ifMatch };
+    const cached = this.client.etags.get(this.name, id);
+    if (!cached) return null;
+    return { "If-Match": cached };
   }
 
   private encName(): string { return enc(this.name); }

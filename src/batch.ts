@@ -1,6 +1,6 @@
 import type { HttpClient } from "./client.ts";
 import { VaultbaseError } from "./errors.ts";
-import type { AnyRecord, ListOptions } from "./types.ts";
+import type { AnyRecord, DefaultSchema, ListOptions, ListResponse } from "./types.ts";
 
 const MAX_OPS = 100;
 
@@ -10,33 +10,74 @@ type Op =
   | { method: "PATCH";  url: string; body: unknown }
   | { method: "DELETE"; url: string };
 
-export type BatchResult = Array<{ status: number; body: unknown }>;
+/** Per-op result envelope. Body is typed by the op kind + Schema generic. */
+export interface BatchOpResult<B = unknown> {
+  status: number;
+  body: B;
+}
 
-export class Batch {
+/** Result of `delete()` ops — server returns 204 with no body. */
+export type BatchDeleteResult = BatchOpResult<null>;
+
+/**
+ * Typed batch builder. Generic params:
+ *   S — Schema map (codegen-emitted)
+ *   R — accumulator tuple of per-op result types, grown by each chained call
+ *
+ * Apps that skip codegen still get a usable `Batch` (R defaults to []).
+ */
+export class Batch<
+  S extends DefaultSchema = DefaultSchema,
+  R extends readonly BatchOpResult[] = [],
+> {
   private ops: Op[] = [];
   constructor(private readonly client: HttpClient) {}
 
-  create(collection: string, body: AnyRecord): this {
+  create<K extends keyof S & string>(
+    collection: K,
+    body: S[K]["create"],
+  ): Batch<S, [...R, BatchOpResult<S[K]["record"]>]>;
+  create(collection: string, body: AnyRecord): Batch<S, [...R, BatchOpResult<AnyRecord>]>;
+  create(collection: string, body: AnyRecord): Batch<S, readonly BatchOpResult[]> {
     this.ops.push({ method: "POST", url: `/api/${enc(collection)}`, body });
-    return this;
+    return this as unknown as Batch<S, readonly BatchOpResult[]>;
   }
 
-  update(collection: string, id: string, body: AnyRecord): this {
+  update<K extends keyof S & string>(
+    collection: K,
+    id: string,
+    body: S[K]["update"],
+  ): Batch<S, [...R, BatchOpResult<S[K]["record"]>]>;
+  update(collection: string, id: string, body: AnyRecord): Batch<S, [...R, BatchOpResult<AnyRecord>]>;
+  update(collection: string, id: string, body: AnyRecord): Batch<S, readonly BatchOpResult[]> {
     this.ops.push({ method: "PATCH", url: `/api/${enc(collection)}/${enc(id)}`, body });
-    return this;
+    return this as unknown as Batch<S, readonly BatchOpResult[]>;
   }
 
-  delete(collection: string, id: string): this {
+  delete(collection: string, id: string): Batch<S, [...R, BatchDeleteResult]> {
     this.ops.push({ method: "DELETE", url: `/api/${enc(collection)}/${enc(id)}` });
-    return this;
+    return this as unknown as Batch<S, [...R, BatchDeleteResult]>;
   }
 
-  get(collection: string, id: string): this {
+  get<K extends keyof S & string>(
+    collection: K,
+    id: string,
+  ): Batch<S, [...R, BatchOpResult<S[K]["record"]>]>;
+  get(collection: string, id: string): Batch<S, [...R, BatchOpResult<AnyRecord>]>;
+  get(collection: string, id: string): Batch<S, readonly BatchOpResult[]> {
     this.ops.push({ method: "GET", url: `/api/${enc(collection)}/${enc(id)}` });
-    return this;
+    return this as unknown as Batch<S, readonly BatchOpResult[]>;
   }
 
-  list(collection: string, query: ListOptions = {}): this {
+  list<K extends keyof S & string>(
+    collection: K,
+    query?: ListOptions,
+  ): Batch<S, [...R, BatchOpResult<ListResponse<S[K]["record"]>>]>;
+  list(
+    collection: string,
+    query?: ListOptions,
+  ): Batch<S, [...R, BatchOpResult<ListResponse<AnyRecord>>]>;
+  list(collection: string, query: ListOptions = {}): Batch<S, readonly BatchOpResult[]> {
     const params = new URLSearchParams();
     for (const [k, v] of Object.entries(query)) {
       if (v === undefined || v === null) continue;
@@ -44,21 +85,25 @@ export class Batch {
     }
     const qs = params.toString();
     this.ops.push({ method: "GET", url: `/api/${enc(collection)}${qs ? `?${qs}` : ""}` });
-    return this;
+    return this as unknown as Batch<S, readonly BatchOpResult[]>;
   }
 
   size(): number { return this.ops.length; }
 
-  async run(): Promise<BatchResult> {
-    if (this.ops.length === 0) return [];
+  async run(): Promise<R> {
+    if (this.ops.length === 0) return [] as unknown as R;
     if (this.ops.length > MAX_OPS) {
       throw VaultbaseError.validation(`Batch exceeds ${MAX_OPS} ops`, { batch: `Got ${this.ops.length} ops` });
     }
-    return await this.client.request<BatchResult>("/api/batch", {
+    const res = await this.client.request<R>("/api/batch", {
       method: "POST",
       body: { requests: this.ops },
     });
+    return res;
   }
 }
+
+/** Legacy, type-erased result shape — kept for backwards compatibility. */
+export type BatchResult = Array<{ status: number; body: unknown }>;
 
 function enc(s: string): string { return encodeURIComponent(s); }
