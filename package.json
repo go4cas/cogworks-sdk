@@ -1,5 +1,5 @@
 {
-  "name": "@vaultbase/sdk",
+  "name": "@vaultbase-sh/sdk",
   "version": "0.3.0",
   "description": "Official TypeScript SDK for Vaultbase — typed REST + WS/SSE client",
   "type": "module",
@@ -84,7 +84,9 @@
     "react": ">=18"
   },
   "peerDependenciesMeta": {
-    "react": { "optional": true }
+    "react": {
+      "optional": true
+    }
   },
   "sideEffects": false
 }
