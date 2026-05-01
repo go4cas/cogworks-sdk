@@ -39,7 +39,7 @@ export class Batch<
   ): Batch<S, [...R, BatchOpResult<S[K]["record"]>]>;
   create(collection: string, body: AnyRecord): Batch<S, [...R, BatchOpResult<AnyRecord>]>;
   create(collection: string, body: AnyRecord): Batch<S, readonly BatchOpResult[]> {
-    this.ops.push({ method: "POST", url: `/api/${enc(collection)}`, body });
+    this.ops.push({ method: "POST", url: `/api/v1/${enc(collection)}`, body });
     return this as unknown as Batch<S, readonly BatchOpResult[]>;
   }
 
@@ -50,12 +50,12 @@ export class Batch<
   ): Batch<S, [...R, BatchOpResult<S[K]["record"]>]>;
   update(collection: string, id: string, body: AnyRecord): Batch<S, [...R, BatchOpResult<AnyRecord>]>;
   update(collection: string, id: string, body: AnyRecord): Batch<S, readonly BatchOpResult[]> {
-    this.ops.push({ method: "PATCH", url: `/api/${enc(collection)}/${enc(id)}`, body });
+    this.ops.push({ method: "PATCH", url: `/api/v1/${enc(collection)}/${enc(id)}`, body });
     return this as unknown as Batch<S, readonly BatchOpResult[]>;
   }
 
   delete(collection: string, id: string): Batch<S, [...R, BatchDeleteResult]> {
-    this.ops.push({ method: "DELETE", url: `/api/${enc(collection)}/${enc(id)}` });
+    this.ops.push({ method: "DELETE", url: `/api/v1/${enc(collection)}/${enc(id)}` });
     return this as unknown as Batch<S, [...R, BatchDeleteResult]>;
   }
 
@@ -65,7 +65,7 @@ export class Batch<
   ): Batch<S, [...R, BatchOpResult<S[K]["record"]>]>;
   get(collection: string, id: string): Batch<S, [...R, BatchOpResult<AnyRecord>]>;
   get(collection: string, id: string): Batch<S, readonly BatchOpResult[]> {
-    this.ops.push({ method: "GET", url: `/api/${enc(collection)}/${enc(id)}` });
+    this.ops.push({ method: "GET", url: `/api/v1/${enc(collection)}/${enc(id)}` });
     return this as unknown as Batch<S, readonly BatchOpResult[]>;
   }
 
@@ -84,7 +84,7 @@ export class Batch<
       params.set(k, String(v));
     }
     const qs = params.toString();
-    this.ops.push({ method: "GET", url: `/api/${enc(collection)}${qs ? `?${qs}` : ""}` });
+    this.ops.push({ method: "GET", url: `/api/v1/${enc(collection)}${qs ? `?${qs}` : ""}` });
     return this as unknown as Batch<S, readonly BatchOpResult[]>;
   }
 
@@ -95,7 +95,7 @@ export class Batch<
     if (this.ops.length > MAX_OPS) {
       throw VaultbaseError.validation(`Batch exceeds ${MAX_OPS} ops`, { batch: `Got ${this.ops.length} ops` });
     }
-    const res = await this.client.request<R>("/api/batch", {
+    const res = await this.client.request<R>("/api/v1/batch", {
       method: "POST",
       body: { requests: this.ops },
     });

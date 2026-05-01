@@ -55,7 +55,7 @@ const REFRESH_LEAD_SECONDS = 60;
 
 /**
  * Per-record ETag cache used for optimistic concurrency. Populated whenever
- * the SDK sees an `ETag` response header on a `/api/<collection>/<id>` path,
+ * the SDK sees an `ETag` response header on a `/api/v1/<collection>/<id>` path,
  * and consumed by `Collection.update` / `.delete` to auto-attach `If-Match`.
  *
  * In-memory only — pinned to the client instance, so concurrent `Vaultbase`
@@ -143,9 +143,9 @@ export class HttpClient {
 
   /**
    * Inspect a response for `ETag` and stash it in {@link etags} when the path
-   * targets a single-record endpoint (`/api/<collection>/<id>`). Subpaths
+   * targets a single-record endpoint (`/api/v1/<collection>/<id>`). Subpaths
    * (`.../history`, `.../restore`, `.../oauth2/...`) and list endpoints
-   * (`/api/<collection>`) are ignored.
+   * (`/api/v1/<collection>`) are ignored.
    */
   private captureEtag(path: string, res: Response): void {
     const etag = res.headers.get("etag");
@@ -187,7 +187,7 @@ export class HttpClient {
 
     if (res.status === 401) {
       // Try a single refresh+retry for non-auth-flow paths.
-      if (!options.skipAuth && !path.endsWith("/api/auth/refresh")) {
+      if (!options.skipAuth && !path.endsWith("/api/v1/auth/refresh")) {
         const ok = await this.refresher.refreshOnce().catch(() => false);
         if (ok) {
           return await this.request<T>(path, { ...options, skipAuth: false });

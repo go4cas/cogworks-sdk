@@ -4,7 +4,7 @@
  * interactive UI.
  *
  * All functions hit the existing server endpoints under
- * `/api/admin/migrations/*` (snapshot / diff / apply).
+ * `/api/v1/admin/migrations/*` (snapshot / diff / apply).
  */
 
 export type ApplyMode = "additive" | "sync";
@@ -56,7 +56,7 @@ async function authedFetch(opts: RemoteOpts, path: string, init: RequestInit = {
 
 /** Fetch a snapshot from a target server. */
 export async function pullSnapshot(opts: RemoteOpts): Promise<SnapshotEnvelope> {
-  const res = await authedFetch(opts, "/api/admin/migrations/snapshot");
+  const res = await authedFetch(opts, "/api/v1/admin/migrations/snapshot");
   if (!res.ok) throw new Error(`pull failed: ${res.status} ${res.statusText}`);
   const data = await res.json();
   return unwrap(data) as SnapshotEnvelope;
@@ -64,7 +64,7 @@ export async function pullSnapshot(opts: RemoteOpts): Promise<SnapshotEnvelope> 
 
 /** Compute the diff between `snapshot` and the target server's current schema. */
 export async function diffSnapshot(snapshot: SnapshotEnvelope, opts: RemoteOpts): Promise<DiffEntry[]> {
-  const res = await authedFetch(opts, "/api/admin/migrations/diff", {
+  const res = await authedFetch(opts, "/api/v1/admin/migrations/diff", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ snapshot }),
@@ -79,7 +79,7 @@ export async function applySnapshot(
   snapshot: SnapshotEnvelope,
   opts: RemoteOpts & { mode?: ApplyMode },
 ): Promise<ApplyResult> {
-  const res = await authedFetch(opts, "/api/admin/migrations/apply", {
+  const res = await authedFetch(opts, "/api/v1/admin/migrations/apply", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ snapshot, mode: opts.mode ?? "additive" }),

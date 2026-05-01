@@ -62,7 +62,7 @@ export class FlagsClient {
   async refresh(): Promise<void> {
     try {
       const res = await this.client.request<{ data?: Record<string, FlagValue> }>(
-        "/api/flags/evaluate",
+        "/api/v1/flags/evaluate",
         { method: "POST", body: { context: this.context }, skipAuth: true },
       );
       const next = res.data ?? {};

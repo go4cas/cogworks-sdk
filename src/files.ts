@@ -25,7 +25,7 @@ export class Files {
     const files = Array.isArray(file) ? file : [file];
     for (const f of files) fd.append("file", f);
 
-    const path = `/api/files/${enc(collection)}/${enc(recordId)}/${enc(field)}`;
+    const path = `/api/v1/files/${enc(collection)}/${enc(recordId)}/${enc(field)}`;
     // Progress reporting: best-effort via streaming fetch in supported runtimes.
     if (opts.onProgress && typeof XMLHttpRequest !== "undefined") {
       return await this.uploadXhr(path, fd, opts) as FileMeta | FileMeta[];
@@ -42,7 +42,7 @@ export class Files {
    * URL includes a `?token=…` minted on demand.
    */
   url(filename: string, params: { thumb?: string; fit?: "contain" | "cover" | "crop" } = {}): string {
-    const u = new URL(`/api/files/${enc(filename)}`, this.client.baseUrl + "/");
+    const u = new URL(`/api/v1/files/${enc(filename)}`, this.client.baseUrl + "/");
     if (params.thumb) {
       u.searchParams.set("thumb", params.thumb);
       if (params.fit) u.searchParams.set("fit", params.fit);
@@ -61,7 +61,7 @@ export class Files {
     if (cached && cached.expires_at - now > 60) return cached;
 
     const data = await this.client.request<TokenResponse>(
-      `/api/files/${enc(collection)}/${enc(recordId)}/${enc(field)}/${enc(filename)}/token`,
+      `/api/v1/files/${enc(collection)}/${enc(recordId)}/${enc(field)}/${enc(filename)}/token`,
       { method: "POST" },
     );
     this.tokenCache.set(key, data);
@@ -89,8 +89,8 @@ export class Files {
     filename?: string,
   ): Promise<{ deleted?: number } | null> {
     const path = filename
-      ? `/api/files/${enc(collection)}/${enc(recordId)}/${enc(field)}/${enc(filename)}`
-      : `/api/files/${enc(collection)}/${enc(recordId)}/${enc(field)}`;
+      ? `/api/v1/files/${enc(collection)}/${enc(recordId)}/${enc(field)}/${enc(filename)}`
+      : `/api/v1/files/${enc(collection)}/${enc(recordId)}/${enc(field)}`;
     return await this.client.request(path, { method: "DELETE" });
   }
 

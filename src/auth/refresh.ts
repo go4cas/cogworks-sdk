@@ -41,7 +41,7 @@ export class RefreshCoordinator {
 
   private async doRefresh(): Promise<boolean> {
     try {
-      const data = await this.client.request<RefreshResponse>("/api/auth/refresh", {
+      const data = await this.client.request<RefreshResponse>("/api/v1/auth/refresh", {
         method: "POST",
         skipAuth: false,
         // Send the current bearer manually so we can call this without re-entering maybeRefresh.

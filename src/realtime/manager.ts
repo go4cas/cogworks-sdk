@@ -164,7 +164,7 @@ export class RealtimeManager {
     if (typeof globalThis.EventSource === "undefined") throw new Error("no eventsource");
     // SSE adapter: open the stream, capture clientId from first frame, then
     // POST subscriptions. Topic mutations re-POST to /api/realtime.
-    const url = this.client.baseUrl + "/api/realtime";
+    const url = this.client.baseUrl + "/api/v1/realtime";
     const es = new globalThis.EventSource(url, { withCredentials: true });
     return await new Promise<Transport>((resolve, reject) => {
       const timer = setTimeout(() => { try { es.close(); } catch { /* noop */ } reject(new Error("sse timeout")); }, 5000);
@@ -183,7 +183,7 @@ export class RealtimeManager {
           close: () => {
             try { es.close(); } catch { /* noop */ }
             if (this.clientId) {
-              void this.client.request(`/api/realtime/${encodeURIComponent(this.clientId)}`, { method: "DELETE" }).catch(() => {});
+              void this.client.request(`/api/v1/realtime/${encodeURIComponent(this.clientId)}`, { method: "DELETE" }).catch(() => {});
             }
           },
         };
@@ -207,7 +207,7 @@ export class RealtimeManager {
   private async sseSubscribe(topics: string[]): Promise<void> {
     if (!this.clientId) return;
     const stored = this.client.authStore.get();
-    await this.client.request("/api/realtime", {
+    await this.client.request("/api/v1/realtime", {
       method: "POST",
       body: {
         clientId: this.clientId,

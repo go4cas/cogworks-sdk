@@ -44,7 +44,7 @@ export class Collection<
       fields: options.fields,
       skipTotal: options.skipTotal ? "1" : undefined,
     };
-    return await this.client.request<ListResponse<R>>(`/api/${this.encName()}`, {
+    return await this.client.request<ListResponse<R>>(`/api/v1/${this.encName()}`, {
       query,
       ...(options.requestKey !== undefined ? { requestKey: options.requestKey } : {}),
       ...(options.signal ? { signal: options.signal } : {}),
@@ -64,11 +64,11 @@ export class Collection<
   }
 
   async get(id: string, opts: MutationOptions = {}): Promise<R> {
-    return await this.client.request<R>(`/api/${this.encName()}/${enc(id)}`, opts);
+    return await this.client.request<R>(`/api/v1/${this.encName()}/${enc(id)}`, opts);
   }
 
   async create(body: C, opts: MutationOptions = {}): Promise<R> {
-    return await this.client.request<R>(`/api/${this.encName()}`, {
+    return await this.client.request<R>(`/api/v1/${this.encName()}`, {
       method: "POST",
       body,
       ...opts,
@@ -78,7 +78,7 @@ export class Collection<
   async update(id: string, body: U, opts: UpdateOptions = {}): Promise<R> {
     const { ifMatch, ...rest } = opts;
     const headers = this.buildIfMatchHeaders(id, ifMatch);
-    return await this.client.request<R>(`/api/${this.encName()}/${enc(id)}`, {
+    return await this.client.request<R>(`/api/v1/${this.encName()}/${enc(id)}`, {
       method: "PATCH",
       body,
       ...rest,
@@ -89,7 +89,7 @@ export class Collection<
   async delete(id: string, opts: DeleteOptions = {}): Promise<null> {
     const { ifMatch, ...rest } = opts;
     const headers = this.buildIfMatchHeaders(id, ifMatch);
-    const r = await this.client.request<null>(`/api/${this.encName()}/${enc(id)}`, {
+    const r = await this.client.request<null>(`/api/v1/${this.encName()}/${enc(id)}`, {
       method: "DELETE",
       ...rest,
       ...(headers ? { headers } : {}),

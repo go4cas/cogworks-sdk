@@ -57,7 +57,7 @@ async function loadSnapshot(args: Args): Promise<SnapshotShape> {
   }
   if (args.url) {
     if (!args.adminToken) throw new Error("--admin-token is required with --url");
-    const url = args.url.replace(/\/+$/, "") + "/api/admin/migrations/snapshot";
+    const url = args.url.replace(/\/+$/, "") + "/api/v1/admin/migrations/snapshot";
     const res = await fetch(url, { headers: { Authorization: `Bearer ${args.adminToken}` } });
     if (!res.ok) throw new Error(`schema fetch failed: ${res.status}`);
     return normalize(await res.json());
