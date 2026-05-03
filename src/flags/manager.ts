@@ -1,6 +1,6 @@
 /**
  * Feature flags client. Owns:
- *   - bulk eval cache populated from POST /api/flags/evaluate
+ *   - bulk eval cache populated from POST /api/v1/flags/evaluate
  *   - sync accessors (isEnabled / getString / getNumber / getJson)
  *   - optional WS subscription on the `__flags` topic that triggers a
  *     refetch when the server pushes a change/delete delta

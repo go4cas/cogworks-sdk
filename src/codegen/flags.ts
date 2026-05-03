@@ -25,7 +25,7 @@ interface FlagShape {
 }
 
 export async function fetchFlags(opts: { url: string; adminToken: string }): Promise<FlagShape[]> {
-  const res = await fetch(`${opts.url.replace(/\/$/, "")}/api/admin/flags`, {
+  const res = await fetch(`${opts.url.replace(/\/$/, "")}/api/v1/admin/flags`, {
     headers: { Authorization: `Bearer ${opts.adminToken}` },
   });
   if (!res.ok) throw new Error(`fetch flags: ${res.status} ${res.statusText}`);

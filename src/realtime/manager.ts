@@ -163,7 +163,7 @@ export class RealtimeManager {
   private async connectSse(): Promise<Transport> {
     if (typeof globalThis.EventSource === "undefined") throw new Error("no eventsource");
     // SSE adapter: open the stream, capture clientId from first frame, then
-    // POST subscriptions. Topic mutations re-POST to /api/realtime.
+    // POST subscriptions. Topic mutations re-POST to /api/v1/realtime.
     const url = this.client.baseUrl + "/api/v1/realtime";
     const es = new globalThis.EventSource(url, { withCredentials: true });
     return await new Promise<Transport>((resolve, reject) => {

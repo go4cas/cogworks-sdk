@@ -1,7 +1,7 @@
 /**
  * Schema-snapshot → TypeScript code generation.
  *
- * Input: the JSON shape returned by `GET /api/admin/migrations/snapshot` —
+ * Input: the JSON shape returned by `GET /api/v1/admin/migrations/snapshot` —
  * an array of collections with `{ name, type, fields, view_query, ...rules }`
  * where `fields` is a JSON-encoded array of `{ name, type, required, options }`
  * objects.

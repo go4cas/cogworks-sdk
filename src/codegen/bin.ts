@@ -44,7 +44,7 @@ function printUsage(): void {
     `Snapshot mode is the default and recommended for CI. Snapshot the schema\n` +
     `via:\n` +
     `  curl -H "Authorization: Bearer $ADMIN" \\\n` +
-    `    https://api.example.com/api/admin/migrations/snapshot \\\n` +
+    `    https://api.example.com/api/v1/admin/migrations/snapshot \\\n` +
     `    > vaultbase-schema.json\n` +
     `Then commit the JSON. Anyone can regen types from it without secrets.\n`,
   );

@@ -92,7 +92,7 @@ const f = vb.q`${field(col)} != ${null}`;
 
 ## Optimistic concurrency (ETag / `If-Match`)
 
-The SDK auto-caches per-record ETags from `GET /api/<col>/<id>` responses
+The SDK auto-caches per-record ETags from `GET /api/v1/<col>/<id>` responses
 and auto-attaches `If-Match` on the next `update` / `delete`:
 
 ```ts
@@ -100,7 +100,7 @@ const post = await vb.collection("posts").get("p1");
 //   → vb.client.etags now has W/"<updated_at>" cached for posts:p1
 
 await vb.collection("posts").update("p1", { title: "new" });
-//   → PATCH /api/posts/p1
+//   → PATCH /api/v1/posts/p1
 //     If-Match: W/"<cached>"
 //
 // If the record changed since the get, the server returns 412 and the SDK
@@ -137,7 +137,7 @@ Snapshot mode (recommended):
 ```bash
 # One-time: capture the schema
 curl -H "Authorization: Bearer $ADMIN_TOKEN" \
-  https://api.example.com/api/admin/migrations/snapshot \
+  https://api.example.com/api/v1/admin/migrations/snapshot \
   > vaultbase-schema.json
 
 # Anyone can regen types from the committed JSON, no admin token:
@@ -153,7 +153,7 @@ npx vb-types --url=https://api.example.com --admin-token=$VB_ADMIN
 ## Schema migrations — `vb-migrate`
 
 Diff and apply schema snapshots between environments. Three subcommands hit
-the existing `/api/admin/migrations/{snapshot,diff,apply}` endpoints.
+the existing `/api/v1/admin/migrations/{snapshot,diff,apply}` endpoints.
 
 ```bash
 # Pull a snapshot from prod
