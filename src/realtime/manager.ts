@@ -34,7 +34,11 @@ export class RealtimeManager {
 
   constructor(private readonly client: HttpClient) {}
 
-  subscribe<R = AnyRecord>(collection: string, filter: SubscribeFilter, cb: SubscribeCallback<R>): () => void {
+  subscribe<R = AnyRecord>(
+    collection: string,
+    filter: SubscribeFilter,
+    cb: SubscribeCallback<R>,
+  ): () => void {
     const sub: Sub = { collection, filter, cb: cb as SubscribeCallback };
     this.subs.push(sub);
     const topics = topicsFor(sub);
@@ -66,8 +70,15 @@ export class RealtimeManager {
     this.closed = true;
     this.subs = [];
     this.topicRefs.clear();
-    if (this.heartbeat) { clearInterval(this.heartbeat); this.heartbeat = null; }
-    try { this.transport?.close(); } catch { /* noop */ }
+    if (this.heartbeat) {
+      clearInterval(this.heartbeat);
+      this.heartbeat = null;
+    }
+    try {
+      this.transport?.close();
+    } catch {
+      /* noop */
+    }
     this.transport = null;
   }
 
@@ -95,21 +106,26 @@ export class RealtimeManager {
     const base = BACKOFF_MS[idx]!;
     const jitter = base * (0.8 + Math.random() * 0.4);
     this.attempt++;
-    setTimeout(() => { void this.ensureConnected(); }, jitter);
+    setTimeout(() => {
+      void this.ensureConnected();
+    }, jitter);
   }
 
   private deliver(ev: RealtimeEvent): void {
     // De-dupe per (id+type) within a 1s sliding window — server fans out the
     // same event through both `<collection>` and `<collection>/<id>` topics.
-    const key = `${ev.collection}:${ev.id ?? ev.record?.["id"] ?? ""}:${ev.type}`;
+    const key = `${ev.collection}:${ev.id ?? ev.record?.id ?? ""}:${ev.type}`;
     if (this.dedup.has(key)) return;
     this.dedup.add(key);
     setTimeout(() => this.dedup.delete(key), 1000);
     for (const sub of this.subs) {
       if (sub.collection !== ev.collection && sub.filter !== "*") continue;
-      if (sub.filter === "*") { sub.cb(ev); continue; }
+      if (sub.filter === "*") {
+        sub.cb(ev);
+        continue;
+      }
       const ids = Array.isArray(sub.filter) ? sub.filter : [sub.filter];
-      const evId = ev.id ?? (ev.record?.["id"] as string | undefined);
+      const evId = ev.id ?? (ev.record?.id as string | undefined);
       if (evId && ids.includes(evId)) sub.cb(ev);
     }
   }
@@ -117,11 +133,15 @@ export class RealtimeManager {
   // ── WebSocket path ──────────────────────────────────────────────────────
   private async connectWs(): Promise<Transport> {
     if (typeof globalThis.WebSocket === "undefined") throw new Error("no websocket");
-    const wsUrl = this.client.baseUrl.replace(/^http/, "ws") + "/realtime";
+    const wsUrl = `${this.client.baseUrl.replace(/^http/, "ws")}/realtime`;
     const ws = new globalThis.WebSocket(wsUrl);
     return await new Promise<Transport>((resolve, reject) => {
       const timer = setTimeout(() => {
-        try { ws.close(); } catch { /* noop */ }
+        try {
+          ws.close();
+        } catch {
+          /* noop */
+        }
         reject(new Error("ws timeout"));
       }, 5000);
       ws.addEventListener("open", () => {
@@ -135,7 +155,13 @@ export class RealtimeManager {
         this.startHeartbeat(() => ws.send(JSON.stringify({ type: "ping" })));
         const transport: Transport = {
           send: (msg) => ws.send(JSON.stringify(msg)),
-          close: () => { try { ws.close(); } catch { /* noop */ } },
+          close: () => {
+            try {
+              ws.close();
+            } catch {
+              /* noop */
+            }
+          },
         };
         resolve(transport);
       });
@@ -144,12 +170,17 @@ export class RealtimeManager {
           const data = JSON.parse(typeof e.data === "string" ? e.data : "");
           if (data?.type === "connected") return;
           if (data?.collection && data?.type) this.deliver(data as RealtimeEvent);
-        } catch { /* drop malformed */ }
+        } catch {
+          /* drop malformed */
+        }
       });
       ws.addEventListener("close", () => {
         clearTimeout(timer);
         this.transport = null;
-        if (this.heartbeat) { clearInterval(this.heartbeat); this.heartbeat = null; }
+        if (this.heartbeat) {
+          clearInterval(this.heartbeat);
+          this.heartbeat = null;
+        }
         if (!this.closed) this.scheduleReconnect();
       });
       ws.addEventListener("error", () => {
@@ -164,16 +195,25 @@ export class RealtimeManager {
     if (typeof globalThis.EventSource === "undefined") throw new Error("no eventsource");
     // SSE adapter: open the stream, capture clientId from first frame, then
     // POST subscriptions. Topic mutations re-POST to /api/v1/realtime.
-    const url = this.client.baseUrl + "/api/v1/realtime";
+    const url = `${this.client.baseUrl}/api/v1/realtime`;
     const es = new globalThis.EventSource(url, { withCredentials: true });
     return await new Promise<Transport>((resolve, reject) => {
-      const timer = setTimeout(() => { try { es.close(); } catch { /* noop */ } reject(new Error("sse timeout")); }, 5000);
+      const timer = setTimeout(() => {
+        try {
+          es.close();
+        } catch {
+          /* noop */
+        }
+        reject(new Error("sse timeout"));
+      }, 5000);
       es.addEventListener("connect", (ev: MessageEvent) => {
         clearTimeout(timer);
         try {
           const parsed = JSON.parse(ev.data) as { clientId?: string };
           if (parsed.clientId) this.clientId = parsed.clientId;
-        } catch { /* noop */ }
+        } catch {
+          /* noop */
+        }
         void this.sseSubscribe(this.uniqueTopics());
         const transport: Transport = {
           send: (msg) => {
@@ -181,9 +221,17 @@ export class RealtimeManager {
             else if (msg.type === "unsubscribe") void this.sseSubscribe(this.uniqueTopics());
           },
           close: () => {
-            try { es.close(); } catch { /* noop */ }
+            try {
+              es.close();
+            } catch {
+              /* noop */
+            }
             if (this.clientId) {
-              void this.client.request(`/api/v1/realtime/${encodeURIComponent(this.clientId)}`, { method: "DELETE" }).catch(() => {});
+              void this.client
+                .request(`/api/v1/realtime/${encodeURIComponent(this.clientId)}`, {
+                  method: "DELETE",
+                })
+                .catch(() => {});
             }
           },
         };
@@ -193,7 +241,9 @@ export class RealtimeManager {
         try {
           const data = JSON.parse(ev.data) as RealtimeEvent;
           if (data?.collection && data?.type) this.deliver(data);
-        } catch { /* drop */ }
+        } catch {
+          /* drop */
+        }
       });
       es.addEventListener("error", () => {
         clearTimeout(timer);
@@ -220,7 +270,11 @@ export class RealtimeManager {
   private startHeartbeat(send: () => void): void {
     if (this.heartbeat) clearInterval(this.heartbeat);
     this.heartbeat = setInterval(() => {
-      try { send(); } catch { /* noop */ }
+      try {
+        send();
+      } catch {
+        /* noop */
+      }
     }, HEARTBEAT_MS);
   }
 }

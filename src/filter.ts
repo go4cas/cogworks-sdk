@@ -31,7 +31,9 @@ declare const FilterBrand: unique symbol;
 export type Filter = string & { readonly [FilterBrand]: true };
 
 /** Wrap an identifier so it interpolates as a bare field reference. */
-export interface FieldRef { readonly __field: string }
+export interface FieldRef {
+  readonly __field: string;
+}
 /**
  * Use inside `q` to interpolate a column / dotted-path identifier without quotes.
  *
@@ -61,7 +63,12 @@ function encodeValue(v: unknown): string {
   if (typeof v === "bigint") return v.toString();
   if (v instanceof Date) return escapeString(v.toISOString());
   if (Array.isArray(v)) return `(${v.map(encodeValue).join(", ")})`;
-  if (typeof v === "object" && v !== null && "__field" in v && typeof (v as FieldRef).__field === "string") {
+  if (
+    typeof v === "object" &&
+    v !== null &&
+    "__field" in v &&
+    typeof (v as FieldRef).__field === "string"
+  ) {
     return (v as FieldRef).__field;
   }
   throw new Error(`vb.q: unsupported interpolation type: ${typeof v}`);

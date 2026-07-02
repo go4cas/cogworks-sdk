@@ -13,7 +13,11 @@ export class CancelRegistry {
   acquire(key: string): AbortSignal {
     const prior = this.map.get(key);
     if (prior) {
-      try { prior.abort(); } catch { /* noop */ }
+      try {
+        prior.abort();
+      } catch {
+        /* noop */
+      }
     }
     const ctrl = new AbortController();
     this.map.set(key, ctrl);
@@ -29,7 +33,11 @@ export class CancelRegistry {
   /** Abort everything (e.g., on logout or unmount of a page). */
   abortAll(): void {
     for (const ctrl of this.map.values()) {
-      try { ctrl.abort(); } catch { /* noop */ }
+      try {
+        ctrl.abort();
+      } catch {
+        /* noop */
+      }
     }
     this.map.clear();
   }

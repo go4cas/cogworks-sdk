@@ -22,7 +22,7 @@ function useFlagBase<T>(client: FlagsClient, key: string, getter: () => T): T {
     return off;
     // getter is closed over key; safe to omit from deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, key]);
+  }, [client, key, getter]);
   return value;
 }
 

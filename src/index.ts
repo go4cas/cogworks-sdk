@@ -7,7 +7,7 @@ import { RealtimeManager } from "./realtime/manager.ts";
 import { FlagsClient } from "./flags/manager.ts";
 import { AdminAuth, CollectionAuth, SharedAuth } from "./auth/flows.ts";
 import { defaultAuthStore, type AuthStore } from "./auth/store.ts";
-import { q, field, rawFilter, type Filter } from "./filter.ts";
+import { q, field } from "./filter.ts";
 import type {
   AnyRecord,
   CollectionTypes,
@@ -57,16 +57,16 @@ export class Vaultbase<S extends DefaultSchema = DefaultSchema> {
 
   /** Fetch a typed collection accessor. */
   collection<K extends keyof S & string>(name: K): CollectionFor<S[K]>;
-  collection<R = AnyRecord, C = AnyRecord, U = AnyRecord>(
-    name: string,
-  ): Collection<R, C, U>;
+  collection<R = AnyRecord, C = AnyRecord, U = AnyRecord>(name: string): Collection<R, C, U>;
   collection(name: string): Collection {
     return new Collection(this.client, name);
   }
 
   /** Build a fresh batch (max 100 ops, server-enforced). Per-op result types
    * are inferred from chained calls when a `Schema` generic is supplied. */
-  batch(): Batch<S> { return new Batch<S>(this.client); }
+  batch(): Batch<S> {
+    return new Batch<S>(this.client);
+  }
 
   /**
    * Tagged-template filter builder. Interpolated values are escaped + quoted
@@ -96,7 +96,9 @@ export class Vaultbase<S extends DefaultSchema = DefaultSchema> {
   }
 
   /** Drop the realtime connection. Auth state untouched; call `auth.shared.logout()` for that. */
-  closeRealtime(): void { this.realtime.closeNow(); }
+  closeRealtime(): void {
+    this.realtime.closeNow();
+  }
 }
 
 // ── Auth surface ────────────────────────────────────────────────────────────

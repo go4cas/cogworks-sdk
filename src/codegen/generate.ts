@@ -64,9 +64,13 @@ export function generateTypes(snapshot: SnapshotShape, opts: GenerateOptions = {
     }
 
     if (col.type === "view") {
-      schemaEntries.push(`  ${quoteKey(col.name)}: { record: ${recordName}; create: never; update: never };`);
+      schemaEntries.push(
+        `  ${quoteKey(col.name)}: { record: ${recordName}; create: never; update: never };`,
+      );
     } else {
-      schemaEntries.push(`  ${quoteKey(col.name)}: { record: ${recordName}; create: ${createName}; update: ${updateName} };`);
+      schemaEntries.push(
+        `  ${quoteKey(col.name)}: { record: ${recordName}; create: ${createName}; update: ${updateName} };`,
+      );
     }
   }
 
@@ -81,7 +85,11 @@ export function generateTypes(snapshot: SnapshotShape, opts: GenerateOptions = {
 
 function parseFields(raw: string | SnapshotField[]): SnapshotField[] {
   if (Array.isArray(raw)) return raw;
-  try { return JSON.parse(raw) as SnapshotField[]; } catch { return []; }
+  try {
+    return JSON.parse(raw) as SnapshotField[];
+  } catch {
+    return [];
+  }
 }
 
 function emitRecord(name: string, fields: SnapshotField[], col: SnapshotCollection): string {
@@ -118,7 +126,11 @@ function emitCreate(name: string, fields: SnapshotField[], col: SnapshotCollecti
   for (const f of fields) {
     if (f.system) continue;
     if (f.type === "autodate") continue;
-    if (col.type === "auth" && (f.name === "email" || f.name === "password" || f.name === "verified")) continue;
+    if (
+      col.type === "auth" &&
+      (f.name === "email" || f.name === "password" || f.name === "verified")
+    )
+      continue;
     const t = tsType(f, "write");
     const opt = f.required ? "" : "?";
     lines.push(`  ${quoteKey(f.name)}${opt}: ${t};`);
@@ -131,7 +143,7 @@ function emitUpdate(name: string, createName: string): string {
   return `export type ${name} = Partial<${createName}>;`;
 }
 
-function tsType(f: SnapshotField, mode: "read" | "write"): string {
+function tsType(f: SnapshotField, _mode: "read" | "write"): string {
   switch (f.type) {
     case "text":
     case "email":
@@ -153,9 +165,8 @@ function tsType(f: SnapshotField, mode: "read" | "write"): string {
     case "select": {
       const opts = (f.options ?? {}) as { values?: string[]; multiple?: boolean };
       const values = opts.values ?? [];
-      const literals = values.length > 0
-        ? values.map((v) => JSON.stringify(v)).join(" | ")
-        : "string";
+      const literals =
+        values.length > 0 ? values.map((v) => JSON.stringify(v)).join(" | ") : "string";
       return opts.multiple ? `(${literals})[]` : literals;
     }
     case "file": {

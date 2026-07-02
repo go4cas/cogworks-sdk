@@ -12,7 +12,9 @@ const sampleSnapshot: SnapshotEnvelope = {
   collections: [{ name: "posts", type: "base", fields: [] }],
 };
 
-function mockFetch(handler: (url: string, init?: RequestInit) => Response): typeof globalThis.fetch {
+function mockFetch(
+  handler: (url: string, init?: RequestInit) => Response,
+): typeof globalThis.fetch {
   return ((url: string | URL | Request, init?: RequestInit) => {
     const u = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
     return Promise.resolve(handler(u, init));
@@ -32,10 +34,11 @@ describe("migrate API", () => {
   });
 
   it("pullSnapshot accepts the {data: …} envelope shape", async () => {
-    const fetch = mockFetch(() =>
-      new Response(JSON.stringify({ data: sampleSnapshot }), {
-        headers: { "content-type": "application/json" },
-      }),
+    const fetch = mockFetch(
+      () =>
+        new Response(JSON.stringify({ data: sampleSnapshot }), {
+          headers: { "content-type": "application/json" },
+        }),
     );
     const snap = await pullSnapshot({ url: "https://x", adminToken: "t", fetch });
     expect(snap.version).toBe(1);
@@ -46,13 +49,16 @@ describe("migrate API", () => {
     const fetch = mockFetch((url, init) => {
       expect(url).toBe("https://x/api/v1/admin/migrations/diff");
       capturedBody = init?.body as string;
-      return new Response(JSON.stringify({
-        data: [
-          { kind: "create", collection: "posts" },
-          { kind: "update", collection: "users", changes: ["field added: avatar"] },
-          { kind: "unchanged", collection: "settings" },
-        ],
-      }), { headers: { "content-type": "application/json" } });
+      return new Response(
+        JSON.stringify({
+          data: [
+            { kind: "create", collection: "posts" },
+            { kind: "update", collection: "users", changes: ["field added: avatar"] },
+            { kind: "unchanged", collection: "settings" },
+          ],
+        }),
+        { headers: { "content-type": "application/json" } },
+      );
     });
     const diff = await diffSnapshot(sampleSnapshot, { url: "https://x", adminToken: "t", fetch });
     expect(diff).toHaveLength(3);
@@ -66,9 +72,12 @@ describe("migrate API", () => {
     const fetch = mockFetch((_url, init) => {
       const body = JSON.parse(init!.body as string) as { mode: string };
       sentMode = body.mode;
-      return new Response(JSON.stringify({
-        data: { created: ["posts"], updated: [], skipped: [], errors: [] },
-      }), { headers: { "content-type": "application/json" } });
+      return new Response(
+        JSON.stringify({
+          data: { created: ["posts"], updated: [], skipped: [], errors: [] },
+        }),
+        { headers: { "content-type": "application/json" } },
+      );
     });
     const r = await applySnapshot(sampleSnapshot, { url: "https://x", adminToken: "t", fetch });
     expect(sentMode).toBe("additive");
@@ -79,16 +88,21 @@ describe("migrate API", () => {
     let sentMode: string | undefined;
     const fetch = mockFetch((_url, init) => {
       sentMode = (JSON.parse(init!.body as string) as { mode: string }).mode;
-      return new Response(JSON.stringify({
-        data: { created: [], updated: ["posts"], skipped: [], errors: [] },
-      }), { headers: { "content-type": "application/json" } });
+      return new Response(
+        JSON.stringify({
+          data: { created: [], updated: ["posts"], skipped: [], errors: [] },
+        }),
+        { headers: { "content-type": "application/json" } },
+      );
     });
     await applySnapshot(sampleSnapshot, { url: "https://x", adminToken: "t", fetch, mode: "sync" });
     expect(sentMode).toBe("sync");
   });
 
   it("throws on non-2xx", async () => {
-    const fetch = mockFetch(() => new Response("nope", { status: 401, statusText: "Unauthorized" }));
+    const fetch = mockFetch(
+      () => new Response("nope", { status: 401, statusText: "Unauthorized" }),
+    );
     await expect(pullSnapshot({ url: "https://x", adminToken: "t", fetch })).rejects.toThrow(/401/);
   });
 
@@ -101,6 +115,6 @@ describe("migrate API", () => {
       });
     });
     await pullSnapshot({ url: "https://x", adminToken: "abc", fetch });
-    expect(captured?.["Authorization"]).toBe("Bearer abc");
+    expect(captured?.Authorization).toBe("Bearer abc");
   });
 });

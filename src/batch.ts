@@ -5,9 +5,9 @@ import type { AnyRecord, DefaultSchema, ListOptions, ListResponse } from "./type
 const MAX_OPS = 100;
 
 type Op =
-  | { method: "GET";    url: string }
-  | { method: "POST";   url: string; body: unknown }
-  | { method: "PATCH";  url: string; body: unknown }
+  | { method: "GET"; url: string }
+  | { method: "POST"; url: string; body: unknown }
+  | { method: "PATCH"; url: string; body: unknown }
   | { method: "DELETE"; url: string };
 
 /** Per-op result envelope. Body is typed by the op kind + Schema generic. */
@@ -48,7 +48,11 @@ export class Batch<
     id: string,
     body: S[K]["update"],
   ): Batch<S, [...R, BatchOpResult<S[K]["record"]>]>;
-  update(collection: string, id: string, body: AnyRecord): Batch<S, [...R, BatchOpResult<AnyRecord>]>;
+  update(
+    collection: string,
+    id: string,
+    body: AnyRecord,
+  ): Batch<S, [...R, BatchOpResult<AnyRecord>]>;
   update(collection: string, id: string, body: AnyRecord): Batch<S, readonly BatchOpResult[]> {
     this.ops.push({ method: "PATCH", url: `/api/v1/${enc(collection)}/${enc(id)}`, body });
     return this as unknown as Batch<S, readonly BatchOpResult[]>;
@@ -88,12 +92,16 @@ export class Batch<
     return this as unknown as Batch<S, readonly BatchOpResult[]>;
   }
 
-  size(): number { return this.ops.length; }
+  size(): number {
+    return this.ops.length;
+  }
 
   async run(): Promise<R> {
     if (this.ops.length === 0) return [] as unknown as R;
     if (this.ops.length > MAX_OPS) {
-      throw VaultbaseError.validation(`Batch exceeds ${MAX_OPS} ops`, { batch: `Got ${this.ops.length} ops` });
+      throw VaultbaseError.validation(`Batch exceeds ${MAX_OPS} ops`, {
+        batch: `Got ${this.ops.length} ops`,
+      });
     }
     const res = await this.client.request<R>("/api/v1/batch", {
       method: "POST",
@@ -106,4 +114,6 @@ export class Batch<
 /** Legacy, type-erased result shape — kept for backwards compatibility. */
 export type BatchResult = Array<{ status: number; body: unknown }>;
 
-function enc(s: string): string { return encodeURIComponent(s); }
+function enc(s: string): string {
+  return encodeURIComponent(s);
+}

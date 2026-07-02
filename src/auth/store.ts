@@ -26,14 +26,18 @@ export interface AuthStore {
 export class MemoryAuthStore implements AuthStore {
   private value: StoredAuth | null = null;
   private listeners = new Set<() => void>();
-  get(): StoredAuth | null { return this.value; }
+  get(): StoredAuth | null {
+    return this.value;
+  }
   set(value: StoredAuth | null): void {
     this.value = value;
     for (const fn of this.listeners) fn();
   }
   onChange(listener: () => void): () => void {
     this.listeners.add(listener);
-    return () => { this.listeners.delete(listener); };
+    return () => {
+      this.listeners.delete(listener);
+    };
   }
 }
 
@@ -52,7 +56,11 @@ abstract class WebStorageAuthStore implements AuthStore {
     if (!s) return null;
     const raw = s.getItem(this.key);
     if (!raw) return null;
-    try { return JSON.parse(raw) as StoredAuth; } catch { return null; }
+    try {
+      return JSON.parse(raw) as StoredAuth;
+    } catch {
+      return null;
+    }
   }
 
   set(value: StoredAuth | null): void {
@@ -62,7 +70,10 @@ abstract class WebStorageAuthStore implements AuthStore {
     else s.setItem(this.key, JSON.stringify(value));
   }
 
-  onChange(_listener: () => void): () => void { void _listener; return () => {}; }
+  onChange(_listener: () => void): () => void {
+    void _listener;
+    return () => {};
+  }
 }
 
 export class SessionStorageAuthStore extends WebStorageAuthStore {
@@ -90,7 +101,9 @@ export class LocalStorageAuthStore extends WebStorageAuthStore {
       addEventListener: (t: string, h: (e: { key?: string }) => void) => void;
       removeEventListener: (t: string, h: (e: { key?: string }) => void) => void;
     };
-    const handler = (e: { key?: string }) => { if (e.key === this.key) listener(); };
+    const handler = (e: { key?: string }) => {
+      if (e.key === this.key) listener();
+    };
     target.addEventListener("storage", handler);
     return () => target.removeEventListener("storage", handler);
   }
@@ -115,7 +128,9 @@ export class CookieAuthStore implements AuthStore {
   }
   onChange(listener: () => void): () => void {
     this.listeners.add(listener);
-    return () => { this.listeners.delete(listener); };
+    return () => {
+      this.listeners.delete(listener);
+    };
   }
 }
 

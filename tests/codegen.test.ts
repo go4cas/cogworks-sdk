@@ -10,7 +10,7 @@ describe("generateTypes", () => {
           type: "base",
           fields: JSON.stringify([
             { name: "title", type: "text", required: true },
-            { name: "body",  type: "editor" },
+            { name: "body", type: "editor" },
             { name: "published", type: "bool" },
             { name: "tags", type: "select", options: { multiple: true, values: ["a", "b"] } },
           ]),
@@ -29,11 +29,13 @@ describe("generateTypes", () => {
 
   it("never emits password on the Record shape", () => {
     const out = generateTypes({
-      collections: [{
-        name: "users",
-        type: "auth",
-        fields: JSON.stringify([{ name: "secret", type: "password" }]),
-      }],
+      collections: [
+        {
+          name: "users",
+          type: "auth",
+          fields: JSON.stringify([{ name: "secret", type: "password" }]),
+        },
+      ],
     });
     expect(out).toContain("export interface UsersRecord");
     expect(out).toContain("export interface UsersCreate");
@@ -44,11 +46,13 @@ describe("generateTypes", () => {
 
   it("view collection: record only, never has create/update entry", () => {
     const out = generateTypes({
-      collections: [{
-        name: "stats",
-        type: "view",
-        fields: JSON.stringify([{ name: "count", type: "number" }]),
-      }],
+      collections: [
+        {
+          name: "stats",
+          type: "view",
+          fields: JSON.stringify([{ name: "count", type: "number" }]),
+        },
+      ],
     });
     expect(out).toContain("export interface StatsRecord");
     expect(out).not.toContain("StatsCreate");
@@ -57,22 +61,26 @@ describe("generateTypes", () => {
 
   it("multi-file file fields → string[]", () => {
     const out = generateTypes({
-      collections: [{
-        name: "posts",
-        type: "base",
-        fields: JSON.stringify([{ name: "covers", type: "file", options: { multiple: true } }]),
-      }],
+      collections: [
+        {
+          name: "posts",
+          type: "base",
+          fields: JSON.stringify([{ name: "covers", type: "file", options: { multiple: true } }]),
+        },
+      ],
     });
     expect(out).toContain("covers?: string[]");
   });
 
   it("auth collection injects email + verified on Record", () => {
     const out = generateTypes({
-      collections: [{
-        name: "users",
-        type: "auth",
-        fields: JSON.stringify([]),
-      }],
+      collections: [
+        {
+          name: "users",
+          type: "auth",
+          fields: JSON.stringify([]),
+        },
+      ],
     });
     expect(out).toContain("email: string;");
     expect(out).toContain("verified: boolean;");

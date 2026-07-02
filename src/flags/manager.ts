@@ -47,7 +47,9 @@ export class FlagsClient {
     if (!opts.pollOnly) this.openWs();
     const interval = Math.max(10_000, opts.pollIntervalMs ?? 60_000);
     if (!this.pollTimer) {
-      this.pollTimer = setInterval(() => { void this.refresh(); }, interval);
+      this.pollTimer = setInterval(() => {
+        void this.refresh();
+      }, interval);
     }
     this.connected = true;
   }
@@ -70,7 +72,9 @@ export class FlagsClient {
       this.cache.clear();
       for (const [k, v] of Object.entries(next)) this.cache.set(k, v);
       if (changed.length > 0) this.emit(changed);
-    } catch { /* offline / boot — keep last-known cache */ }
+    } catch {
+      /* offline / boot — keep last-known cache */
+    }
   }
 
   // ── Sync accessors ──────────────────────────────────────────────────────
@@ -97,18 +101,26 @@ export class FlagsClient {
     for (const [k, v] of this.cache) out[k] = v;
     return out;
   }
-  isConnected(): boolean { return this.connected && !this.closed; }
+  isConnected(): boolean {
+    return this.connected && !this.closed;
+  }
 
   // ── Listeners ───────────────────────────────────────────────────────────
 
   on(_event: "change", cb: FlagsChangeListener): () => void {
     this.listeners.add(cb);
-    return () => { this.listeners.delete(cb); };
+    return () => {
+      this.listeners.delete(cb);
+    };
   }
 
   private emit(changedKeys: string[]): void {
     for (const cb of this.listeners) {
-      try { cb(changedKeys); } catch { /* listener error ignored */ }
+      try {
+        cb(changedKeys);
+      } catch {
+        /* listener error ignored */
+      }
     }
   }
 
@@ -116,9 +128,13 @@ export class FlagsClient {
 
   private openWs(): void {
     if (typeof globalThis.WebSocket === "undefined") return;
-    const url = this.client.baseUrl.replace(/^http/, "ws") + "/realtime";
+    const url = `${this.client.baseUrl.replace(/^http/, "ws")}/realtime`;
     let ws: WebSocket;
-    try { ws = new globalThis.WebSocket(url); } catch { return; }
+    try {
+      ws = new globalThis.WebSocket(url);
+    } catch {
+      return;
+    }
     this.ws = ws;
     ws.addEventListener("open", () => {
       this.reconnectAttempt = 0;
@@ -133,17 +149,26 @@ export class FlagsClient {
         if (data?.type === "flag_changed" || data?.type === "flag_deleted") {
           void this.refresh();
         }
-      } catch { /* drop */ }
+      } catch {
+        /* drop */
+      }
     });
     ws.addEventListener("close", () => {
       this.ws = null;
       if (this.closed) return;
-      const delay = Math.min(30_000, 500 * 2 ** this.reconnectAttempt) * (0.8 + Math.random() * 0.4);
+      const delay =
+        Math.min(30_000, 500 * 2 ** this.reconnectAttempt) * (0.8 + Math.random() * 0.4);
       this.reconnectAttempt++;
-      setTimeout(() => { if (!this.closed) this.openWs(); }, delay);
+      setTimeout(() => {
+        if (!this.closed) this.openWs();
+      }, delay);
     });
     ws.addEventListener("error", () => {
-      try { ws.close(); } catch { /* noop */ }
+      try {
+        ws.close();
+      } catch {
+        /* noop */
+      }
     });
   }
 
@@ -151,8 +176,18 @@ export class FlagsClient {
   disconnect(): void {
     this.closed = true;
     this.connected = false;
-    if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = null; }
-    if (this.ws) { try { this.ws.close(); } catch { /* noop */ } this.ws = null; }
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+    if (this.ws) {
+      try {
+        this.ws.close();
+      } catch {
+        /* noop */
+      }
+      this.ws = null;
+    }
   }
 }
 
@@ -172,7 +207,11 @@ function eq(a: unknown, b: unknown): boolean {
   if (a === undefined || b === undefined || a === null || b === null) return false;
   if (typeof a !== typeof b) return false;
   if (typeof a === "object") {
-    try { return JSON.stringify(a) === JSON.stringify(b); } catch { return false; }
+    try {
+      return JSON.stringify(a) === JSON.stringify(b);
+    } catch {
+      return false;
+    }
   }
   return false;
 }

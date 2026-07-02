@@ -2,7 +2,10 @@ import type { HttpClient } from "./client.ts";
 import type { FileMeta, UploadOptions } from "./types.ts";
 import { VaultbaseError } from "./errors.ts";
 
-interface TokenResponse { token: string; expires_at: number }
+interface TokenResponse {
+  token: string;
+  expires_at: number;
+}
 
 /**
  * File upload / download / token minting. Auto-mints + caches per-filename
@@ -28,7 +31,7 @@ export class Files {
     const path = `/api/v1/files/${enc(collection)}/${enc(recordId)}/${enc(field)}`;
     // Progress reporting: best-effort via streaming fetch in supported runtimes.
     if (opts.onProgress && typeof XMLHttpRequest !== "undefined") {
-      return await this.uploadXhr(path, fd, opts) as FileMeta | FileMeta[];
+      return (await this.uploadXhr(path, fd, opts)) as FileMeta | FileMeta[];
     }
     return await this.client.request<FileMeta | FileMeta[]>(path, {
       method: "POST",
@@ -41,8 +44,11 @@ export class Files {
    * Build a public URL for a stored filename. For `protected` fields the
    * URL includes a `?token=…` minted on demand.
    */
-  url(filename: string, params: { thumb?: string; fit?: "contain" | "cover" | "crop" } = {}): string {
-    const u = new URL(`/api/v1/files/${enc(filename)}`, this.client.baseUrl + "/");
+  url(
+    filename: string,
+    params: { thumb?: string; fit?: "contain" | "cover" | "crop" } = {},
+  ): string {
+    const u = new URL(`/api/v1/files/${enc(filename)}`, `${this.client.baseUrl}/`);
     if (params.thumb) {
       u.searchParams.set("thumb", params.thumb);
       if (params.fit) u.searchParams.set("fit", params.fit);
@@ -54,7 +60,12 @@ export class Files {
    * Mint (or return cached) a 1h access token for a protected file. Auto-
    * refreshes ~60s before expiry.
    */
-  async token(collection: string, recordId: string, field: string, filename: string): Promise<TokenResponse> {
+  async token(
+    collection: string,
+    recordId: string,
+    field: string,
+    filename: string,
+  ): Promise<TokenResponse> {
     const key = `${collection}:${recordId}:${field}:${filename}`;
     const now = Math.floor(Date.now() / 1000);
     const cached = this.tokenCache.get(key);
@@ -116,15 +127,25 @@ export class Files {
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           let parsed: unknown;
-          try { parsed = JSON.parse(xhr.responseText); } catch { parsed = null; }
+          try {
+            parsed = JSON.parse(xhr.responseText);
+          } catch {
+            parsed = null;
+          }
           const data = (parsed as { data?: unknown } | null)?.data ?? parsed;
           resolve(data);
         } else if (xhr.status === 401 || xhr.status === 403) {
           reject(VaultbaseError.auth(xhr.status === 401 ? "expired" : "forbidden"));
         } else if (xhr.status === 422) {
           let parsed: { details?: Record<string, string>; error?: string } | null = null;
-          try { parsed = JSON.parse(xhr.responseText); } catch { /* noop */ }
-          reject(VaultbaseError.validation(parsed?.error ?? "Validation failed", parsed?.details ?? {}));
+          try {
+            parsed = JSON.parse(xhr.responseText);
+          } catch {
+            /* noop */
+          }
+          reject(
+            VaultbaseError.validation(parsed?.error ?? "Validation failed", parsed?.details ?? {}),
+          );
         } else {
           reject(VaultbaseError.server(xhr.status, `HTTP ${xhr.status}`));
         }
@@ -134,4 +155,6 @@ export class Files {
   }
 }
 
-function enc(s: string): string { return encodeURIComponent(s); }
+function enc(s: string): string {
+  return encodeURIComponent(s);
+}

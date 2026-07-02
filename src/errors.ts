@@ -13,13 +13,41 @@ export type ErrorKind =
   | "server"
   | "aborted";
 
-export interface NetworkErrorData    { kind: "network"; message: string; cause?: unknown }
-export interface AuthErrorData       { kind: "auth"; message: string; reason: "expired" | "invalid" | "forbidden" }
-export interface ValidationErrorData { kind: "validation"; message: string; details: Record<string, string> }
-export interface RateLimitErrorData  { kind: "rate_limit"; message: string; retryAfterMs: number }
-export interface ConflictErrorData   { kind: "conflict"; message: string; serverCode: 409 | 422 }
-export interface ServerErrorData     { kind: "server"; message: string; status: number; body?: unknown }
-export interface AbortedErrorData    { kind: "aborted"; message: string }
+export interface NetworkErrorData {
+  kind: "network";
+  message: string;
+  cause?: unknown;
+}
+export interface AuthErrorData {
+  kind: "auth";
+  message: string;
+  reason: "expired" | "invalid" | "forbidden";
+}
+export interface ValidationErrorData {
+  kind: "validation";
+  message: string;
+  details: Record<string, string>;
+}
+export interface RateLimitErrorData {
+  kind: "rate_limit";
+  message: string;
+  retryAfterMs: number;
+}
+export interface ConflictErrorData {
+  kind: "conflict";
+  message: string;
+  serverCode: 409 | 422;
+}
+export interface ServerErrorData {
+  kind: "server";
+  message: string;
+  status: number;
+  body?: unknown;
+}
+export interface AbortedErrorData {
+  kind: "aborted";
+  message: string;
+}
 /** 412 Precondition Failed — `If-Match` ETag did not match the server's record. */
 export interface PreconditionFailedErrorData {
   kind: "precondition_failed";
@@ -51,10 +79,18 @@ export class VaultbaseError extends Error {
   }
 
   static network(message: string, cause?: unknown): VaultbaseError {
-    return new VaultbaseError({ kind: "network", message, ...(cause !== undefined ? { cause } : {}) });
+    return new VaultbaseError({
+      kind: "network",
+      message,
+      ...(cause !== undefined ? { cause } : {}),
+    });
   }
   static auth(reason: AuthErrorData["reason"], message?: string): VaultbaseError {
-    return new VaultbaseError({ kind: "auth", reason, message: message ?? `Authentication failed: ${reason}` });
+    return new VaultbaseError({
+      kind: "auth",
+      reason,
+      message: message ?? `Authentication failed: ${reason}`,
+    });
   }
   static validation(message: string, details: Record<string, string> = {}): VaultbaseError {
     return new VaultbaseError({ kind: "validation", message, details });
@@ -66,7 +102,12 @@ export class VaultbaseError extends Error {
     return new VaultbaseError({ kind: "conflict", message, serverCode });
   }
   static server(status: number, message: string, body?: unknown): VaultbaseError {
-    return new VaultbaseError({ kind: "server", message, status, ...(body !== undefined ? { body } : {}) });
+    return new VaultbaseError({
+      kind: "server",
+      message,
+      status,
+      ...(body !== undefined ? { body } : {}),
+    });
   }
   static aborted(message = "Request aborted"): VaultbaseError {
     return new VaultbaseError({ kind: "aborted", message });

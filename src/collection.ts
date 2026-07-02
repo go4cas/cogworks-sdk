@@ -26,12 +26,11 @@ export type DeleteOptions = MutationOptions & ConcurrencyOptions;
  *   C — the create-input type (from `Schema[K]['create']`)
  *   U — the update-input type (from `Schema[K]['update']`)
  */
-export class Collection<
-  R = AnyRecord,
-  C = AnyRecord,
-  U = AnyRecord,
-> {
-  constructor(private readonly client: HttpClient, private readonly name: string) {}
+export class Collection<R = AnyRecord, C = AnyRecord, U = AnyRecord> {
+  constructor(
+    private readonly client: HttpClient,
+    private readonly name: string,
+  ) {}
 
   /** Paginated list. Filters / sort / expand pass through to the server expression engine. */
   async list(options: ListOptions = {}): Promise<ListResponse<R>> {
@@ -105,7 +104,10 @@ export class Collection<
    * from the client's ETag cache; an explicit string overrides the cache;
    * `false` disables the precondition entirely.
    */
-  private buildIfMatchHeaders(id: string, ifMatch: ConcurrencyOptions["ifMatch"]): Record<string, string> | null {
+  private buildIfMatchHeaders(
+    id: string,
+    ifMatch: ConcurrencyOptions["ifMatch"],
+  ): Record<string, string> | null {
     if (ifMatch === false) return null;
     if (typeof ifMatch === "string" && ifMatch.length > 0) return { "If-Match": ifMatch };
     const cached = this.client.etags.get(this.name, id);
@@ -113,10 +115,18 @@ export class Collection<
     return { "If-Match": cached };
   }
 
-  private encName(): string { return enc(this.name); }
+  private encName(): string {
+    return enc(this.name);
+  }
 }
 
 /** Helper type bridging Schema to Collection generics. */
-export type CollectionFor<T extends CollectionTypes> = Collection<T["record"], T["create"], T["update"]>;
+export type CollectionFor<T extends CollectionTypes> = Collection<
+  T["record"],
+  T["create"],
+  T["update"]
+>;
 
-function enc(s: string): string { return encodeURIComponent(s); }
+function enc(s: string): string {
+  return encodeURIComponent(s);
+}

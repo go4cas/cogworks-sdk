@@ -1,6 +1,8 @@
 import type { HttpClient } from "../client.ts";
 
-interface RefreshResponse { token: string }
+interface RefreshResponse {
+  token: string;
+}
 
 /**
  * Coordinates token refresh across the SDK instance. Dedupes concurrent
@@ -14,18 +16,24 @@ export class RefreshCoordinator {
   constructor(private readonly client: HttpClient) {
     if (typeof globalThis !== "undefined" && "BroadcastChannel" in globalThis) {
       try {
-        this.channel = new (globalThis as unknown as { BroadcastChannel: typeof BroadcastChannel })
-          .BroadcastChannel("vaultbase-refresh");
+        this.channel = new (
+          globalThis as unknown as { BroadcastChannel: typeof BroadcastChannel }
+        ).BroadcastChannel("vaultbase-refresh");
         this.channel.addEventListener("message", (ev: MessageEvent<unknown>) => {
           const msg = ev.data as { type?: string; token?: string } | null;
           if (msg?.type === "refreshed" && typeof msg.token === "string") {
             const cur = this.client.authStore.get();
-            this.client.authStore.set({ token: msg.token, ...(cur?.record ? { record: cur.record } : {}) });
+            this.client.authStore.set({
+              token: msg.token,
+              ...(cur?.record ? { record: cur.record } : {}),
+            });
           } else if (msg?.type === "logout") {
             this.client.authStore.set(null);
           }
         });
-      } catch { this.channel = null; }
+      } catch {
+        this.channel = null;
+      }
     }
   }
 
@@ -35,7 +43,9 @@ export class RefreshCoordinator {
    */
   refreshOnce(): Promise<boolean> {
     if (this.inFlight) return this.inFlight;
-    this.inFlight = this.doRefresh().finally(() => { this.inFlight = null; });
+    this.inFlight = this.doRefresh().finally(() => {
+      this.inFlight = null;
+    });
     return this.inFlight;
   }
 
@@ -53,7 +63,10 @@ export class RefreshCoordinator {
         return false;
       }
       const prev = this.client.authStore.get();
-      this.client.authStore.set({ token: data.token, ...(prev?.record ? { record: prev.record } : {}) });
+      this.client.authStore.set({
+        token: data.token,
+        ...(prev?.record ? { record: prev.record } : {}),
+      });
       this.broadcast({ type: "refreshed", token: data.token });
       return true;
     } catch {
@@ -65,6 +78,10 @@ export class RefreshCoordinator {
 
   private broadcast(msg: { type: "refreshed"; token: string } | { type: "logout" }): void {
     if (!this.channel) return;
-    try { this.channel.postMessage(msg); } catch { /* noop */ }
+    try {
+      this.channel.postMessage(msg);
+    } catch {
+      /* noop */
+    }
   }
 }

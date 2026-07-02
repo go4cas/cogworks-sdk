@@ -31,18 +31,24 @@ describe("decodeJwtPayload", () => {
 
 describe("HttpClient.request", () => {
   it("unwraps the standard `{ data: ... }` envelope", async () => {
-    const c = makeClient(() => new Response(JSON.stringify({ data: { id: "x" } }), {
-      headers: { "content-type": "application/json" },
-    }));
+    const c = makeClient(
+      () =>
+        new Response(JSON.stringify({ data: { id: "x" } }), {
+          headers: { "content-type": "application/json" },
+        }),
+    );
     const r = await c.request<{ id: string }>("/api/v1/posts");
     expect(r.id).toBe("x");
   });
 
   it("translates 422 into a VaultbaseError of kind=validation", async () => {
-    const c = makeClient(() => new Response(
-      JSON.stringify({ error: "bad", details: { email: "required" } }),
-      { status: 422, headers: { "content-type": "application/json" } },
-    ));
+    const c = makeClient(
+      () =>
+        new Response(JSON.stringify({ error: "bad", details: { email: "required" } }), {
+          status: 422,
+          headers: { "content-type": "application/json" },
+        }),
+    );
     try {
       await c.request("/api/v1/posts", { method: "POST", body: {} });
       throw new Error("should have thrown");
@@ -51,16 +57,19 @@ describe("HttpClient.request", () => {
       const err = e as VaultbaseError;
       expect(err.kind).toBe("validation");
       if (err.data.kind === "validation") {
-        expect(err.data.details["email"]).toBe("required");
+        expect(err.data.details.email).toBe("required");
       }
     }
   });
 
   it("translates 429 into rate_limit with retryAfterMs", async () => {
-    const c = makeClient(() => new Response("", {
-      status: 429,
-      headers: { "retry-after": "2", "content-type": "application/json" },
-    }));
+    const c = makeClient(
+      () =>
+        new Response("", {
+          status: 429,
+          headers: { "retry-after": "2", "content-type": "application/json" },
+        }),
+    );
     try {
       await c.request("/api/v1/x");
     } catch (e) {
@@ -77,13 +86,19 @@ describe("HttpClient.request", () => {
     let captured = "";
     const c = new HttpClient({
       baseUrl: "http://localhost",
-      authStore: (() => { const s = new MemoryAuthStore(); s.set({ token: "tok-123" }); return s; })(),
+      authStore: (() => {
+        const s = new MemoryAuthStore();
+        s.set({ token: "tok-123" });
+        return s;
+      })(),
       fetch: ((req: Request | string, init?: RequestInit) => {
         const r = typeof req === "string" ? new Request(req, init) : req;
         captured = r.headers.get("authorization") ?? "";
-        return Promise.resolve(new Response(JSON.stringify({ data: 1 }), {
-          headers: { "content-type": "application/json" },
-        }));
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: 1 }), {
+            headers: { "content-type": "application/json" },
+          }),
+        );
       }) as typeof fetch,
     });
     await c.request("/api/v1/x");
@@ -92,10 +107,16 @@ describe("HttpClient.request", () => {
 
   it("auto-cancels the prior request with the same requestKey", async () => {
     let aborts = 0;
-    const c = makeClient((req) => new Promise<Response>((resolve) => {
-      req.signal?.addEventListener("abort", () => { aborts++; resolve(new Response("", { status: 499 })); });
-      // never resolve unless aborted
-    }));
+    const c = makeClient(
+      (req) =>
+        new Promise<Response>((resolve) => {
+          req.signal?.addEventListener("abort", () => {
+            aborts++;
+            resolve(new Response("", { status: 499 }));
+          });
+          // never resolve unless aborted
+        }),
+    );
     const p1 = c.request("/api/v1/x", { requestKey: "k" }).catch(() => "aborted");
     const p2 = c.request("/api/v1/x", { requestKey: "k" }).catch(() => "aborted");
     void p1;

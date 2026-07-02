@@ -29,7 +29,7 @@ export async function fetchFlags(opts: { url: string; adminToken: string }): Pro
     headers: { Authorization: `Bearer ${opts.adminToken}` },
   });
   if (!res.ok) throw new Error(`fetch flags: ${res.status} ${res.statusText}`);
-  const body = await res.json() as { data?: FlagShape[] };
+  const body = (await res.json()) as { data?: FlagShape[] };
   return body.data ?? [];
 }
 
@@ -42,7 +42,7 @@ export function generateFlagTypes(flags: FlagShape[]): string {
   if (flags.length === 0) {
     lines.push("export type FlagKey = never;");
     lines.push("export interface FlagTypes {}");
-    return lines.join("\n") + "\n";
+    return `${lines.join("\n")}\n`;
   }
   const keys = flags.map((f) => JSON.stringify(f.key)).join(" | ");
   lines.push(`export type FlagKey = ${keys};`);

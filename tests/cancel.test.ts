@@ -14,7 +14,7 @@ describe("CancelRegistry", () => {
     const r = new CancelRegistry();
     const a = r.acquire("k");
     const b = r.acquire("k"); // aborts a
-    r.release("k", a);        // stale; should NOT clear b
+    r.release("k", a); // stale; should NOT clear b
     const c = r.acquire("k");
     expect(b.aborted).toBe(true);
     expect(c.aborted).toBe(false);

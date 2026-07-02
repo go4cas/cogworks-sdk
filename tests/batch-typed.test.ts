@@ -4,13 +4,27 @@ import { HttpClient } from "../src/client.ts";
 import { MemoryAuthStore } from "../src/auth/store.ts";
 import type { CollectionTypes, ListResponse } from "../src/types.ts";
 
-interface PostRec { id: string; title: string }
-interface PostCreate { title: string }
-interface PostUpdate { title?: string }
+interface PostRec {
+  id: string;
+  title: string;
+}
+interface PostCreate {
+  title: string;
+}
+interface PostUpdate {
+  title?: string;
+}
 
-interface UserRec { id: string; email: string }
-interface UserCreate { email: string }
-interface UserUpdate { email?: string }
+interface UserRec {
+  id: string;
+  email: string;
+}
+interface UserCreate {
+  email: string;
+}
+interface UserUpdate {
+  email?: string;
+}
 
 type TestSchema = {
   posts: CollectionTypes<PostRec, PostCreate, PostUpdate>;
@@ -25,11 +39,25 @@ function client(): HttpClient {
       const r = typeof req === "string" ? new Request(req, init) : req;
       void r;
       // server returns array of per-op results in order of submission
-      return Promise.resolve(new Response(JSON.stringify([
-        { status: 201, body: { id: "p1", title: "hi" } },
-        { status: 200, body: { id: "u1", email: "x@y.z" } },
-        { status: 200, body: { data: [{ id: "p2", title: "two" }], page: 1, perPage: 10, totalItems: 1, totalPages: 1 } },
-      ]), { headers: { "content-type": "application/json" } }));
+      return Promise.resolve(
+        new Response(
+          JSON.stringify([
+            { status: 201, body: { id: "p1", title: "hi" } },
+            { status: 200, body: { id: "u1", email: "x@y.z" } },
+            {
+              status: 200,
+              body: {
+                data: [{ id: "p2", title: "two" }],
+                page: 1,
+                perPage: 10,
+                totalItems: 1,
+                totalPages: 1,
+              },
+            },
+          ]),
+          { headers: { "content-type": "application/json" } },
+        ),
+      );
     }) as typeof fetch,
   });
 }
