@@ -53,18 +53,20 @@ async function loadServer(): Promise<NonNullable<typeof cachedImports>> {
 
 export async function startTestServer(): Promise<Started> {
   const dataDir = mkdtempSync(join(tmpdir(), "vbsdk-it-"));
-  process.env["VAULTBASE_DATA_DIR"] = dataDir;
+  process.env.VAULTBASE_DATA_DIR = dataDir;
   // Deterministic secret so signed JWTs survive multiple verifies in test.
-  process.env["VAULTBASE_JWT_SECRET"] = "test-jwt-secret-do-not-use-in-prod";
+  process.env.VAULTBASE_JWT_SECRET = "test-jwt-secret-do-not-use-in-prod";
   // Disable rate limiting so test bursts don't 429 themselves.
-  process.env["VAULTBASE_RATE_ENABLED"] = "0";
+  process.env.VAULTBASE_RATE_ENABLED = "0";
 
   const mod = await loadServer();
   const cfg = await mod.loadConfig();
   mod.initDb(`file:${cfg.dbPath}`);
   await mod.runMigrations();
   // Allow any origin for realtime — test runners do not match a fixed Origin.
-  mod.setSetting("security.allowed_origins", "*");
+  // Key is `cors.origins` (the WS/SSE origin gate reads that, not the old
+  // `security.allowed_origins`, since vaultbase's 2026 CORS fix).
+  mod.setSetting("cors.origins", "*");
 
   const elysia = mod.createServer(cfg);
   // Bun port 0 → random free port. Elysia forwards `.server.port` after listen.
@@ -91,13 +93,25 @@ export async function startTestServer(): Promise<Started> {
     body: JSON.stringify({ email: adminEmail, password: adminPassword }),
   });
   if (!login.ok) throw new Error(`login failed: ${login.status}`);
-  const loginBody = await login.json() as { data: { token: string } };
+  const loginBody = (await login.json()) as { data: { token: string } };
   const adminToken = loginBody.data.token;
 
   const cleanup = () => {
-    try { elysia.stop?.(); } catch { /* noop */ }
-    try { mod.closeDb(); } catch { /* noop */ }
-    try { rmSync(dataDir, { recursive: true, force: true }); } catch { /* noop */ }
+    try {
+      elysia.stop?.();
+    } catch {
+      /* noop */
+    }
+    try {
+      mod.closeDb();
+    } catch {
+      /* noop */
+    }
+    try {
+      rmSync(dataDir, { recursive: true, force: true });
+    } catch {
+      /* noop */
+    }
   };
 
   return { baseUrl, cleanup, adminEmail, adminPassword, adminToken, jwtSecret: cfg.jwtSecret };
