@@ -68,11 +68,11 @@ export async function startTestServer(): Promise<Started> {
   // `security.allowed_origins`, since vaultbase's 2026 CORS fix).
   mod.setSetting("cors.origins", "*");
 
-  const elysia = mod.createServer(cfg);
-  // Bun port 0 → random free port. Elysia forwards `.server.port` after listen.
-  elysia.listen(0);
-  // Elysia exposes the underlying Bun server at `.server`.
-  const port = (elysia as unknown as { server?: { port: number } }).server?.port ?? 0;
+  // createServer returns a Hono app's `{ fetch, websocket }` — drive Bun.serve
+  // ourselves. Port 0 → random free port; Bun surfaces it on `server.port`.
+  const { fetch: honoFetch, websocket } = mod.createServer(cfg);
+  const httpServer = Bun.serve({ port: 0, fetch: honoFetch, websocket });
+  const port = httpServer.port ?? 0;
   if (!port) throw new Error("server failed to bind a port");
   const baseUrl = `http://localhost:${port}`;
 
@@ -98,7 +98,7 @@ export async function startTestServer(): Promise<Started> {
 
   const cleanup = () => {
     try {
-      elysia.stop?.();
+      httpServer.stop(true);
     } catch {
       /* noop */
     }
