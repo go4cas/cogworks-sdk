@@ -17,7 +17,7 @@ describe("VaultbaseError", () => {
 
   it("validation carries details map", () => {
     const e = VaultbaseError.validation("bad", { email: "required" });
-    if (e.data.kind === "validation") expect(e.data.details["email"]).toBe("required");
+    if (e.data.kind === "validation") expect(e.data.details.email).toBe("required");
   });
 
   it("isVaultbaseError narrows correctly", () => {

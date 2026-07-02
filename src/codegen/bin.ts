@@ -23,14 +23,25 @@ function parseArgs(argv: string[]): Args {
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i] ?? "";
     if (a.startsWith("--schema=")) args.schema = a.slice("--schema=".length);
-    else if (a === "--schema") { const v = argv[++i]; if (v) args.schema = v; }
-    else if (a.startsWith("--url=")) args.url = a.slice("--url=".length);
-    else if (a === "--url") { const v = argv[++i]; if (v) args.url = v; }
-    else if (a.startsWith("--admin-token=")) args.adminToken = a.slice("--admin-token=".length);
-    else if (a === "--admin-token") { const v = argv[++i]; if (v) args.adminToken = v; }
-    else if (a.startsWith("--out=")) args.out = a.slice("--out=".length);
-    else if (a === "--out" || a === "-o") { const next = argv[++i]; if (next) args.out = next; }
-    else if (a === "--help" || a === "-h") { printUsage(); process.exit(0); }
+    else if (a === "--schema") {
+      const v = argv[++i];
+      if (v) args.schema = v;
+    } else if (a.startsWith("--url=")) args.url = a.slice("--url=".length);
+    else if (a === "--url") {
+      const v = argv[++i];
+      if (v) args.url = v;
+    } else if (a.startsWith("--admin-token=")) args.adminToken = a.slice("--admin-token=".length);
+    else if (a === "--admin-token") {
+      const v = argv[++i];
+      if (v) args.adminToken = v;
+    } else if (a.startsWith("--out=")) args.out = a.slice("--out=".length);
+    else if (a === "--out" || a === "-o") {
+      const next = argv[++i];
+      if (next) args.out = next;
+    } else if (a === "--help" || a === "-h") {
+      printUsage();
+      process.exit(0);
+    }
   }
   return args;
 }
@@ -38,15 +49,15 @@ function parseArgs(argv: string[]): Args {
 function printUsage(): void {
   process.stdout.write(
     `vb-types — generate TypeScript types from a Vaultbase schema\n\n` +
-    `Usage:\n` +
-    `  vb-types --schema=./vaultbase-schema.json [--out=./vaultbase-schema.gen.ts]\n` +
-    `  vb-types --url=https://api.example.com --admin-token=$TOKEN [--out=./types.gen.ts]\n\n` +
-    `Snapshot mode is the default and recommended for CI. Snapshot the schema\n` +
-    `via:\n` +
-    `  curl -H "Authorization: Bearer $ADMIN" \\\n` +
-    `    https://api.example.com/api/v1/admin/migrations/snapshot \\\n` +
-    `    > vaultbase-schema.json\n` +
-    `Then commit the JSON. Anyone can regen types from it without secrets.\n`,
+      `Usage:\n` +
+      `  vb-types --schema=./vaultbase-schema.json [--out=./vaultbase-schema.gen.ts]\n` +
+      `  vb-types --url=https://api.example.com --admin-token=$TOKEN [--out=./types.gen.ts]\n\n` +
+      `Snapshot mode is the default and recommended for CI. Snapshot the schema\n` +
+      `via:\n` +
+      `  curl -H "Authorization: Bearer $ADMIN" \\\n` +
+      `    https://api.example.com/api/v1/admin/migrations/snapshot \\\n` +
+      `    > vaultbase-schema.json\n` +
+      `Then commit the JSON. Anyone can regen types from it without secrets.\n`,
   );
 }
 
@@ -57,7 +68,7 @@ async function loadSnapshot(args: Args): Promise<SnapshotShape> {
   }
   if (args.url) {
     if (!args.adminToken) throw new Error("--admin-token is required with --url");
-    const url = args.url.replace(/\/+$/, "") + "/api/v1/admin/migrations/snapshot";
+    const url = `${args.url.replace(/\/+$/, "")}/api/v1/admin/migrations/snapshot`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${args.adminToken}` } });
     if (!res.ok) throw new Error(`schema fetch failed: ${res.status}`);
     return normalize(await res.json());

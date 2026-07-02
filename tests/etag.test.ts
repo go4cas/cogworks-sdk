@@ -10,7 +10,10 @@ interface Captured {
   headers: Record<string, string>;
 }
 
-function makeClient(handler: (cap: Captured) => Response): { client: HttpClient; calls: Captured[] } {
+function makeClient(handler: (cap: Captured) => Response): {
+  client: HttpClient;
+  calls: Captured[];
+} {
   const calls: Captured[] = [];
   const fetcher = ((url: string | URL | Request, init?: RequestInit) => {
     const u = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
@@ -44,7 +47,8 @@ describe("EtagCache", () => {
 
   it("clear() removes everything", () => {
     const c = new EtagCache();
-    c.set("a", "1", "x"); c.set("b", "2", "y");
+    c.set("a", "1", "x");
+    c.set("b", "2", "y");
     c.clear();
     expect(c.get("a", "1")).toBeUndefined();
     expect(c.get("b", "2")).toBeUndefined();
@@ -53,25 +57,34 @@ describe("EtagCache", () => {
 
 describe("HttpClient ETag capture", () => {
   it("captures ETag from /api/<col>/<id> responses", async () => {
-    const { client } = makeClient(() => new Response(JSON.stringify({ data: { id: "p1" } }), {
-      headers: { "content-type": "application/json", etag: `W/"42"` },
-    }));
+    const { client } = makeClient(
+      () =>
+        new Response(JSON.stringify({ data: { id: "p1" } }), {
+          headers: { "content-type": "application/json", etag: `W/"42"` },
+        }),
+    );
     await client.request("/api/v1/posts/p1");
     expect(client.etags.get("posts", "p1")).toBe(`W/"42"`);
   });
 
   it("does NOT capture from list endpoints", async () => {
-    const { client } = makeClient(() => new Response(JSON.stringify({ data: [] }), {
-      headers: { "content-type": "application/json", etag: `W/"99"` },
-    }));
+    const { client } = makeClient(
+      () =>
+        new Response(JSON.stringify({ data: [] }), {
+          headers: { "content-type": "application/json", etag: `W/"99"` },
+        }),
+    );
     await client.request("/api/v1/posts");
     expect(client.etags.get("posts", "")).toBeUndefined();
   });
 
   it("does NOT capture from sub-resource paths", async () => {
-    const { client } = makeClient(() => new Response(JSON.stringify({ data: [] }), {
-      headers: { "content-type": "application/json", etag: `W/"99"` },
-    }));
+    const { client } = makeClient(
+      () =>
+        new Response(JSON.stringify({ data: [] }), {
+          headers: { "content-type": "application/json", etag: `W/"99"` },
+        }),
+    );
     await client.request("/api/v1/posts/p1/history");
     expect(client.etags.get("posts", "p1")).toBeUndefined();
   });
@@ -99,9 +112,12 @@ describe("Collection auto-attaches If-Match", () => {
   });
 
   it("ifMatch=false skips the precondition", async () => {
-    const { client, calls } = makeClient(() => new Response(JSON.stringify({ data: {} }), {
-      headers: { "content-type": "application/json" },
-    }));
+    const { client, calls } = makeClient(
+      () =>
+        new Response(JSON.stringify({ data: {} }), {
+          headers: { "content-type": "application/json" },
+        }),
+    );
     client.etags.set("posts", "p1", `W/"7"`);
     const col = new Collection(client, "posts");
     await col.update("p1", { title: "x" }, { ifMatch: false });
@@ -109,9 +125,12 @@ describe("Collection auto-attaches If-Match", () => {
   });
 
   it("explicit ifMatch string overrides the cache", async () => {
-    const { client, calls } = makeClient(() => new Response(JSON.stringify({ data: {} }), {
-      headers: { "content-type": "application/json" },
-    }));
+    const { client, calls } = makeClient(
+      () =>
+        new Response(JSON.stringify({ data: {} }), {
+          headers: { "content-type": "application/json" },
+        }),
+    );
     client.etags.set("posts", "p1", `W/"cached"`);
     const col = new Collection(client, "posts");
     await col.update("p1", { title: "x" }, { ifMatch: `W/"explicit"` });
@@ -119,9 +138,12 @@ describe("Collection auto-attaches If-Match", () => {
   });
 
   it("delete auto-attaches and invalidates the cache on success", async () => {
-    const { client, calls } = makeClient(() => new Response(JSON.stringify({ data: null }), {
-      headers: { "content-type": "application/json" },
-    }));
+    const { client, calls } = makeClient(
+      () =>
+        new Response(JSON.stringify({ data: null }), {
+          headers: { "content-type": "application/json" },
+        }),
+    );
     client.etags.set("posts", "p1", `W/"42"`);
     const col = new Collection(client, "posts");
     await col.delete("p1");
@@ -130,10 +152,13 @@ describe("Collection auto-attaches If-Match", () => {
   });
 
   it("412 response surfaces as VaultbaseError(precondition_failed) with currentEtag", async () => {
-    const { client } = makeClient(() => new Response(JSON.stringify({ error: "Precondition Failed", code: 412 }), {
-      status: 412,
-      headers: { "content-type": "application/json", etag: `W/"99"` },
-    }));
+    const { client } = makeClient(
+      () =>
+        new Response(JSON.stringify({ error: "Precondition Failed", code: 412 }), {
+          status: 412,
+          headers: { "content-type": "application/json", etag: `W/"99"` },
+        }),
+    );
     client.etags.set("posts", "p1", `W/"42"`);
     const col = new Collection(client, "posts");
     try {
@@ -142,7 +167,10 @@ describe("Collection auto-attaches If-Match", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(VaultbaseError);
       expect((e as VaultbaseError).kind).toBe("precondition_failed");
-      const data = (e as VaultbaseError).data as { kind: "precondition_failed"; currentEtag?: string };
+      const data = (e as VaultbaseError).data as {
+        kind: "precondition_failed";
+        currentEtag?: string;
+      };
       expect(data.currentEtag).toBe(`W/"99"`);
     }
   });

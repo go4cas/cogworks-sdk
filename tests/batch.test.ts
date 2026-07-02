@@ -10,9 +10,13 @@ function client(handler?: (req: Request) => Response): HttpClient {
     authStore: new MemoryAuthStore(),
     fetch: ((req: Request | string, init?: RequestInit) => {
       const r = typeof req === "string" ? new Request(req, init) : req;
-      return Promise.resolve(handler ? handler(r) : new Response(JSON.stringify({ data: { data: [] } }), {
-        headers: { "content-type": "application/json" },
-      }));
+      return Promise.resolve(
+        handler
+          ? handler(r)
+          : new Response(JSON.stringify({ data: { data: [] } }), {
+              headers: { "content-type": "application/json" },
+            }),
+      );
     }) as typeof fetch,
   });
 }

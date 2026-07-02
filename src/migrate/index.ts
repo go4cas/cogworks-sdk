@@ -45,7 +45,11 @@ function joinUrl(base: string, path: string): string {
   return base.replace(/\/+$/, "") + path;
 }
 
-async function authedFetch(opts: RemoteOpts, path: string, init: RequestInit = {}): Promise<Response> {
+async function authedFetch(
+  opts: RemoteOpts,
+  path: string,
+  init: RequestInit = {},
+): Promise<Response> {
   const f = opts.fetch ?? globalThis.fetch;
   const headers: Record<string, string> = {
     Authorization: `Bearer ${opts.adminToken}`,
@@ -63,7 +67,10 @@ export async function pullSnapshot(opts: RemoteOpts): Promise<SnapshotEnvelope> 
 }
 
 /** Compute the diff between `snapshot` and the target server's current schema. */
-export async function diffSnapshot(snapshot: SnapshotEnvelope, opts: RemoteOpts): Promise<DiffEntry[]> {
+export async function diffSnapshot(
+  snapshot: SnapshotEnvelope,
+  opts: RemoteOpts,
+): Promise<DiffEntry[]> {
   const res = await authedFetch(opts, "/api/v1/admin/migrations/diff", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

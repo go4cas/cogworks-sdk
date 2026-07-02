@@ -1,9 +1,18 @@
 import type { HttpClient } from "../client.ts";
 import type { AnyRecord } from "../types.ts";
 
-export interface LoginInput { email: string; password: string }
-export interface LoginResult<R = AnyRecord> { token: string; record: R }
-export interface MfaPending { mfa_required: true; mfa_token: string }
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+export interface LoginResult<R = AnyRecord> {
+  token: string;
+  record: R;
+}
+export interface MfaPending {
+  mfa_required: true;
+  mfa_token: string;
+}
 
 export interface RegisterInput {
   email: string;
@@ -11,10 +20,20 @@ export interface RegisterInput {
   [k: string]: unknown;
 }
 
-export interface OtpRequestInput { email: string }
-export interface OtpAuthInput { token?: string; code?: string; email?: string }
+export interface OtpRequestInput {
+  email: string;
+}
+export interface OtpAuthInput {
+  token?: string;
+  code?: string;
+  email?: string;
+}
 
-export interface MfaLoginInput { mfa_token: string; code?: string; recovery_code?: string }
+export interface MfaLoginInput {
+  mfa_token: string;
+  code?: string;
+  recovery_code?: string;
+}
 
 export interface OAuth2AuthorizeQuery {
   provider: string;
@@ -39,7 +58,10 @@ export interface OAuth2MergeConfirmInput {
 
 /** Per-collection auth namespace: `vb.auth.users.login(...)`. */
 export class CollectionAuth<R = AnyRecord> {
-  constructor(private readonly client: HttpClient, private readonly collection: string) {}
+  constructor(
+    private readonly client: HttpClient,
+    private readonly collection: string,
+  ) {}
 
   async register(input: RegisterInput): Promise<{ id: string; email: string }> {
     return await this.client.request(`/api/v1/auth/${enc(this.collection)}/register`, {
@@ -55,7 +77,10 @@ export class CollectionAuth<R = AnyRecord> {
       { method: "POST", body: input, skipAuth: true },
     );
     if (!("mfa_required" in data) && data.token) {
-      this.client.authStore.set({ token: data.token, record: data.record as Record<string, unknown> });
+      this.client.authStore.set({
+        token: data.token,
+        record: data.record as Record<string, unknown>,
+      });
     }
     return data;
   }
@@ -66,13 +91,18 @@ export class CollectionAuth<R = AnyRecord> {
       { method: "POST", body: input, skipAuth: true },
     );
     if (data.token) {
-      this.client.authStore.set({ token: data.token, record: data.record as Record<string, unknown> });
+      this.client.authStore.set({
+        token: data.token,
+        record: data.record as Record<string, unknown>,
+      });
     }
     return data;
   }
 
   async requestVerify(): Promise<{ sent: boolean; alreadyVerified?: boolean }> {
-    return await this.client.request(`/api/v1/auth/${enc(this.collection)}/request-verify`, { method: "POST" });
+    return await this.client.request(`/api/v1/auth/${enc(this.collection)}/request-verify`, {
+      method: "POST",
+    });
   }
 
   async verifyEmail(token: string): Promise<{ verified: boolean }> {
@@ -84,19 +114,25 @@ export class CollectionAuth<R = AnyRecord> {
   }
 
   async requestPasswordReset(email: string): Promise<{ sent: boolean }> {
-    return await this.client.request(`/api/v1/auth/${enc(this.collection)}/request-password-reset`, {
-      method: "POST",
-      body: { email },
-      skipAuth: true,
-    });
+    return await this.client.request(
+      `/api/v1/auth/${enc(this.collection)}/request-password-reset`,
+      {
+        method: "POST",
+        body: { email },
+        skipAuth: true,
+      },
+    );
   }
 
   async confirmPasswordReset(token: string, password: string): Promise<{ reset: boolean }> {
-    return await this.client.request(`/api/v1/auth/${enc(this.collection)}/confirm-password-reset`, {
-      method: "POST",
-      body: { token, password },
-      skipAuth: true,
-    });
+    return await this.client.request(
+      `/api/v1/auth/${enc(this.collection)}/confirm-password-reset`,
+      {
+        method: "POST",
+        body: { token, password },
+        skipAuth: true,
+      },
+    );
   }
 
   async otpRequest(email: string): Promise<{ sent: boolean }> {
@@ -113,13 +149,18 @@ export class CollectionAuth<R = AnyRecord> {
       { method: "POST", body: input, skipAuth: true },
     );
     if (!("mfa_required" in data) && data.token) {
-      this.client.authStore.set({ token: data.token, record: data.record as Record<string, unknown> });
+      this.client.authStore.set({
+        token: data.token,
+        record: data.record as Record<string, unknown>,
+      });
     }
     return data;
   }
 
   async totpSetup(): Promise<{ secret: string; otpauth_url: string }> {
-    return await this.client.request(`/api/v1/auth/${enc(this.collection)}/totp/setup`, { method: "POST" });
+    return await this.client.request(`/api/v1/auth/${enc(this.collection)}/totp/setup`, {
+      method: "POST",
+    });
   }
 
   async totpConfirm(code: string): Promise<{ enabled: true }> {
@@ -137,9 +178,12 @@ export class CollectionAuth<R = AnyRecord> {
   }
 
   async recoveryRegenerate(): Promise<{ codes: string[] }> {
-    return await this.client.request(`/api/v1/auth/${enc(this.collection)}/totp/recovery/regenerate`, {
-      method: "POST",
-    });
+    return await this.client.request(
+      `/api/v1/auth/${enc(this.collection)}/totp/recovery/regenerate`,
+      {
+        method: "POST",
+      },
+    );
   }
 
   async recoveryStatus(): Promise<{ total: number; remaining: number }> {
@@ -152,7 +196,10 @@ export class CollectionAuth<R = AnyRecord> {
       { method: "POST", skipAuth: true },
     );
     if (data.token) {
-      this.client.authStore.set({ token: data.token, record: data.record as Record<string, unknown> });
+      this.client.authStore.set({
+        token: data.token,
+        record: data.record as Record<string, unknown>,
+      });
     }
     return data;
   }
@@ -163,13 +210,20 @@ export class CollectionAuth<R = AnyRecord> {
       { method: "POST", body: input },
     );
     if (data.token) {
-      this.client.authStore.set({ token: data.token, record: data.record as Record<string, unknown> });
+      this.client.authStore.set({
+        token: data.token,
+        record: data.record as Record<string, unknown>,
+      });
     }
     return data;
   }
 
-  async oauth2Providers(): Promise<Array<{ name: string; displayName?: string; clientId?: string }>> {
-    return await this.client.request(`/api/v1/auth/${enc(this.collection)}/oauth2/providers`, { skipAuth: true });
+  async oauth2Providers(): Promise<
+    Array<{ name: string; displayName?: string; clientId?: string }>
+  > {
+    return await this.client.request(`/api/v1/auth/${enc(this.collection)}/oauth2/providers`, {
+      skipAuth: true,
+    });
   }
 
   async oauth2Authorize(query: OAuth2AuthorizeQuery): Promise<{
@@ -179,38 +233,57 @@ export class CollectionAuth<R = AnyRecord> {
     pkce: "server" | "client" | "none";
   }> {
     const q: Record<string, string | number | boolean | undefined> = { ...query };
-    return await this.client.request(
-      `/api/v1/auth/${enc(this.collection)}/oauth2/authorize`,
-      { query: q, skipAuth: true },
-    );
+    return await this.client.request(`/api/v1/auth/${enc(this.collection)}/oauth2/authorize`, {
+      query: q,
+      skipAuth: true,
+    });
   }
 
-  async oauth2Exchange(input: OAuth2ExchangeInput): Promise<LoginResult<R> | { merge_required: true; merge_token: string; email: string; provider: string }> {
-    const data = await this.client.request<LoginResult<R> | { merge_required: true; merge_token: string; email: string; provider: string }>(
-      `/api/v1/auth/${enc(this.collection)}/oauth2/exchange`,
-      { method: "POST", body: input, skipAuth: true },
-    );
+  async oauth2Exchange(
+    input: OAuth2ExchangeInput,
+  ): Promise<
+    LoginResult<R> | { merge_required: true; merge_token: string; email: string; provider: string }
+  > {
+    const data = await this.client.request<
+      | LoginResult<R>
+      | { merge_required: true; merge_token: string; email: string; provider: string }
+    >(`/api/v1/auth/${enc(this.collection)}/oauth2/exchange`, {
+      method: "POST",
+      body: input,
+      skipAuth: true,
+    });
     if ("token" in data && data.token) {
-      this.client.authStore.set({ token: data.token, record: data.record as Record<string, unknown> });
+      this.client.authStore.set({
+        token: data.token,
+        record: data.record as Record<string, unknown>,
+      });
     }
     return data;
   }
 
-  async oauth2MergeConfirm(input: OAuth2MergeConfirmInput): Promise<LoginResult<R> & { linked_provider: string }> {
+  async oauth2MergeConfirm(
+    input: OAuth2MergeConfirmInput,
+  ): Promise<LoginResult<R> & { linked_provider: string }> {
     const data = await this.client.request<LoginResult<R> & { linked_provider: string }>(
       `/api/v1/auth/${enc(this.collection)}/oauth2/merge-confirm`,
       { method: "POST", body: input },
     );
     if (data.token) {
-      this.client.authStore.set({ token: data.token, record: data.record as Record<string, unknown> });
+      this.client.authStore.set({
+        token: data.token,
+        record: data.record as Record<string, unknown>,
+      });
     }
     return data;
   }
 
   async oauth2Unlink(provider: string): Promise<null> {
-    return await this.client.request(`/api/v1/auth/${enc(this.collection)}/oauth2/${enc(provider)}/unlink`, {
-      method: "DELETE",
-    });
+    return await this.client.request(
+      `/api/v1/auth/${enc(this.collection)}/oauth2/${enc(provider)}/unlink`,
+      {
+        method: "DELETE",
+      },
+    );
   }
 }
 
@@ -218,7 +291,10 @@ export class CollectionAuth<R = AnyRecord> {
 export class AdminAuth {
   constructor(private readonly client: HttpClient) {}
 
-  async setup(input: { email: string; password: string }, opts: { setupKey?: string } = {}): Promise<{ id: string; email: string }> {
+  async setup(
+    input: { email: string; password: string },
+    opts: { setupKey?: string } = {},
+  ): Promise<{ id: string; email: string }> {
     return await this.client.request("/api/v1/admin/setup", {
       method: "POST",
       body: input,
@@ -244,8 +320,14 @@ export class AdminAuth {
     return await this.client.request("/api/v1/admin/auth/me");
   }
 
-  async impersonate<R = AnyRecord>(collection: string, userId: string): Promise<LoginResult<R> & { impersonated_by: string }> {
-    return await this.client.request(`/api/v1/admin/impersonate/${enc(collection)}/${enc(userId)}`, { method: "POST" });
+  async impersonate<R = AnyRecord>(
+    collection: string,
+    userId: string,
+  ): Promise<LoginResult<R> & { impersonated_by: string }> {
+    return await this.client.request(
+      `/api/v1/admin/impersonate/${enc(collection)}/${enc(userId)}`,
+      { method: "POST" },
+    );
   }
 }
 
@@ -258,8 +340,11 @@ export class SharedAuth {
   }
 
   async logout(): Promise<void> {
-    try { await this.client.request("/api/v1/auth/logout", { method: "POST" }); }
-    finally { this.client.authStore.set(null); }
+    try {
+      await this.client.request("/api/v1/auth/logout", { method: "POST" });
+    } finally {
+      this.client.authStore.set(null);
+    }
   }
 
   async me<R = AnyRecord>(): Promise<R> {
@@ -267,4 +352,6 @@ export class SharedAuth {
   }
 }
 
-function enc(s: string): string { return encodeURIComponent(s); }
+function enc(s: string): string {
+  return encodeURIComponent(s);
+}

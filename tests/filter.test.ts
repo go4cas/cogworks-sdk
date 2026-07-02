@@ -61,8 +61,9 @@ describe("q (tagged-template filter)", () => {
   it("composes parts with literal text in between", () => {
     const term = "foo";
     const status = "published";
-    expect(s(q`title ~ ${term} && status = ${status} && deleted = ${false}`))
-      .toBe(`title ~ "foo" && status = "published" && deleted = false`);
+    expect(s(q`title ~ ${term} && status = ${status} && deleted = ${false}`)).toBe(
+      `title ~ "foo" && status = "published" && deleted = false`,
+    );
   });
 
   it("rawFilter passes through unmodified", () => {

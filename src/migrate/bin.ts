@@ -48,16 +48,26 @@ function parseArgs(argv: string[]): Args {
   for (let i = 1; i < argv.length; i++) {
     const a = argv[i] ?? "";
     if (a.startsWith("--url=")) out.url = a.slice("--url=".length);
-    else if (a === "--url") { const v = argv[++i]; if (v) out.url = v; }
-    else if (a.startsWith("--admin-token=")) out.adminToken = a.slice("--admin-token=".length);
-    else if (a === "--admin-token") { const v = argv[++i]; if (v) out.adminToken = v; }
-    else if (a.startsWith("--schema=")) out.schema = a.slice("--schema=".length);
-    else if (a === "--schema") { const v = argv[++i]; if (v) out.schema = v; }
-    else if (a.startsWith("--out=")) out.out = a.slice("--out=".length);
-    else if (a === "--out" || a === "-o") { const v = argv[++i]; if (v) out.out = v; }
-    else if (a.startsWith("--mode=")) out.mode = a.slice("--mode=".length) as ApplyMode;
-    else if (a === "--mode") { const v = argv[++i]; if (v) out.mode = v as ApplyMode; }
-    else if (a === "--yes" || a === "-y") out.yes = true;
+    else if (a === "--url") {
+      const v = argv[++i];
+      if (v) out.url = v;
+    } else if (a.startsWith("--admin-token=")) out.adminToken = a.slice("--admin-token=".length);
+    else if (a === "--admin-token") {
+      const v = argv[++i];
+      if (v) out.adminToken = v;
+    } else if (a.startsWith("--schema=")) out.schema = a.slice("--schema=".length);
+    else if (a === "--schema") {
+      const v = argv[++i];
+      if (v) out.schema = v;
+    } else if (a.startsWith("--out=")) out.out = a.slice("--out=".length);
+    else if (a === "--out" || a === "-o") {
+      const v = argv[++i];
+      if (v) out.out = v;
+    } else if (a.startsWith("--mode=")) out.mode = a.slice("--mode=".length) as ApplyMode;
+    else if (a === "--mode") {
+      const v = argv[++i];
+      if (v) out.mode = v as ApplyMode;
+    } else if (a === "--yes" || a === "-y") out.yes = true;
     else if (a === "--dry-run") out.dryRun = true;
     else if (a === "--help" || a === "-h") out.cmd = "help";
     else throw new Error(`Unknown flag: ${a}`);
@@ -68,20 +78,20 @@ function parseArgs(argv: string[]): Args {
 function printUsage(): void {
   process.stdout.write(
     `vb-migrate — diff / apply Vaultbase schema snapshots\n\n` +
-    `Commands:\n` +
-    `  pull   Download current schema from a server.\n` +
-    `         vb-migrate pull --url=<host> --admin-token=$T --out=./schema.json\n\n` +
-    `  diff   Compare a local snapshot with a server's current schema.\n` +
-    `         vb-migrate diff --url=<host> --admin-token=$T --schema=./schema.json\n\n` +
-    `  apply  Apply a snapshot to a server. Always diffs first.\n` +
-    `         vb-migrate apply --url=<host> --admin-token=$T --schema=./schema.json\n` +
-    `                          [--mode=additive|sync] [--yes] [--dry-run]\n\n` +
-    `Modes:\n` +
-    `  additive (default) — only creates missing collections/fields. Never updates.\n` +
-    `  sync               — also updates existing collections to match the snapshot.\n\n` +
-    `Flags:\n` +
-    `  --yes / -y       skip the confirmation prompt (required in non-TTY contexts).\n` +
-    `  --dry-run        run diff but do not call apply.\n`,
+      `Commands:\n` +
+      `  pull   Download current schema from a server.\n` +
+      `         vb-migrate pull --url=<host> --admin-token=$T --out=./schema.json\n\n` +
+      `  diff   Compare a local snapshot with a server's current schema.\n` +
+      `         vb-migrate diff --url=<host> --admin-token=$T --schema=./schema.json\n\n` +
+      `  apply  Apply a snapshot to a server. Always diffs first.\n` +
+      `         vb-migrate apply --url=<host> --admin-token=$T --schema=./schema.json\n` +
+      `                          [--mode=additive|sync] [--yes] [--dry-run]\n\n` +
+      `Modes:\n` +
+      `  additive (default) — only creates missing collections/fields. Never updates.\n` +
+      `  sync               — also updates existing collections to match the snapshot.\n\n` +
+      `Flags:\n` +
+      `  --yes / -y       skip the confirmation prompt (required in non-TTY contexts).\n` +
+      `  --dry-run        run diff but do not call apply.\n`,
   );
 }
 
@@ -89,16 +99,25 @@ async function loadSchema(p: string): Promise<SnapshotEnvelope> {
   const raw = await fs.readFile(resolve(p), "utf8");
   const parsed = JSON.parse(raw);
   // Accept either {generated_at,version,collections} or a wrapper {data: ...}.
-  const inner = parsed && typeof parsed === "object" && "data" in parsed
-    ? (parsed as { data: SnapshotEnvelope }).data
-    : (parsed as SnapshotEnvelope);
-  if (!inner || typeof inner !== "object" || !Array.isArray((inner as SnapshotEnvelope).collections)) {
+  const inner =
+    parsed && typeof parsed === "object" && "data" in parsed
+      ? (parsed as { data: SnapshotEnvelope }).data
+      : (parsed as SnapshotEnvelope);
+  if (
+    !inner ||
+    typeof inner !== "object" ||
+    !Array.isArray((inner as SnapshotEnvelope).collections)
+  ) {
     throw new Error("Schema file does not look like a valid snapshot");
   }
   return inner as SnapshotEnvelope;
 }
 
-function summarizeDiff(entries: DiffEntry[]): { creates: DiffEntry[]; updates: DiffEntry[]; unchanged: DiffEntry[] } {
+function summarizeDiff(entries: DiffEntry[]): {
+  creates: DiffEntry[];
+  updates: DiffEntry[];
+  unchanged: DiffEntry[];
+} {
   return {
     creates: entries.filter((e) => e.kind === "create"),
     updates: entries.filter((e) => e.kind === "update"),
@@ -167,7 +186,9 @@ async function cmdApply(args: Args): Promise<void> {
     return;
   }
   if (!args.yes) {
-    process.stdout.write(`\nRefusing to apply without --yes (or run with --dry-run to inspect only).\n`);
+    process.stdout.write(
+      `\nRefusing to apply without --yes (or run with --dry-run to inspect only).\n`,
+    );
     process.exit(2);
   }
   const result = await applySnapshot(snap, { url, adminToken, mode: args.mode ?? "additive" });
@@ -184,7 +205,10 @@ async function cmdApply(args: Args): Promise<void> {
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
-  if (args.cmd === "help") { printUsage(); return; }
+  if (args.cmd === "help") {
+    printUsage();
+    return;
+  }
   if (args.cmd === "pull") return cmdPull(args);
   if (args.cmd === "diff") return cmdDiff(args);
   if (args.cmd === "apply") return cmdApply(args);

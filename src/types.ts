@@ -20,7 +20,7 @@ export interface CollectionTypes<R = AnyRecord, C = AnyRecord, U = AnyRecord> {
  * interfaces (which don't carry an index signature) still satisfy this
  * constraint.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: type-level default — any is the correct unconstrained parameter here
 export type DefaultSchema = Record<string, CollectionTypes<any, any, any>>;
 
 /** Server's standard list-response envelope. */

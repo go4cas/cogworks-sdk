@@ -17,7 +17,12 @@ const d = RUN ? describe : describe.skip;
 let server: Awaited<ReturnType<typeof startTestServer>>;
 let vb: Vaultbase;
 
-interface PostRecord { id: string; title: string; body?: string; cover?: string }
+interface PostRecord {
+  id: string;
+  title: string;
+  body?: string;
+  cover?: string;
+}
 
 d("integration — SDK ↔ live Vaultbase", () => {
   beforeAll(async () => {
@@ -37,7 +42,7 @@ d("integration — SDK ↔ live Vaultbase", () => {
         type: "base",
         fields: [
           { name: "title", type: "text", required: true },
-          { name: "body",  type: "editor" },
+          { name: "body", type: "editor" },
           { name: "cover", type: "file" },
         ],
       },
@@ -56,13 +61,17 @@ d("integration — SDK ↔ live Vaultbase", () => {
   });
 
   it("CRUDs a record through the typed Collection accessor", async () => {
-    const created = await vb.collection<PostRecord>("posts").create({ title: "hello", body: "<p>hi</p>" });
+    const created = await vb
+      .collection<PostRecord>("posts")
+      .create({ title: "hello", body: "<p>hi</p>" });
     expect(created.id).toBeTruthy();
 
     const fetched = await vb.collection<PostRecord>("posts").get(created.id);
     expect(fetched.title).toBe("hello");
 
-    const updated = await vb.collection<PostRecord>("posts").update(created.id, { title: "renamed" });
+    const updated = await vb
+      .collection<PostRecord>("posts")
+      .update(created.id, { title: "renamed" });
     expect(updated.title).toBe("renamed");
 
     const list = await vb.collection<PostRecord>("posts").list({ filter: 'title = "renamed"' });
@@ -87,7 +96,8 @@ d("integration — SDK ↔ live Vaultbase", () => {
   });
 
   it("batch endpoint executes mixed ops", async () => {
-    const r = await vb.batch()
+    const r = await vb
+      .batch()
       .create("posts", { title: "b1" })
       .create("posts", { title: "b2" })
       .list("posts", { filter: 'title ~ "b"', perPage: 5 })
@@ -99,7 +109,9 @@ d("integration — SDK ↔ live Vaultbase", () => {
 
   it("file upload + URL builder + delete", async () => {
     const post = await vb.collection<PostRecord>("posts").create({ title: "with-file" });
-    const blob = new File([new Uint8Array([1, 2, 3, 4])], "tiny.bin", { type: "application/octet-stream" });
+    const blob = new File([new Uint8Array([1, 2, 3, 4])], "tiny.bin", {
+      type: "application/octet-stream",
+    });
     const meta = await vb.files.upload("posts", post.id, "cover", blob);
     const m = Array.isArray(meta) ? meta[0]! : meta;
     expect(m.filename).toBeTruthy();

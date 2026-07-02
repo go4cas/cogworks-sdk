@@ -31,7 +31,11 @@ export interface RequestOptions {
   skipAuth?: boolean;
 }
 
-interface JwtClaims { exp?: number; iat?: number; [k: string]: unknown }
+interface JwtClaims {
+  exp?: number;
+  iat?: number;
+  [k: string]: unknown;
+}
 
 /**
  * Cheap base64url JWT decode. Validates structure only — signature is the
@@ -63,10 +67,18 @@ const REFRESH_LEAD_SECONDS = 60;
  */
 export class EtagCache {
   private readonly map = new Map<string, string>();
-  get(collection: string, id: string): string | undefined { return this.map.get(`${collection}:${id}`); }
-  set(collection: string, id: string, etag: string): void { this.map.set(`${collection}:${id}`, etag); }
-  delete(collection: string, id: string): void { this.map.delete(`${collection}:${id}`); }
-  clear(): void { this.map.clear(); }
+  get(collection: string, id: string): string | undefined {
+    return this.map.get(`${collection}:${id}`);
+  }
+  set(collection: string, id: string, etag: string): void {
+    this.map.set(`${collection}:${id}`, etag);
+  }
+  delete(collection: string, id: string): void {
+    this.map.delete(`${collection}:${id}`);
+  }
+  clear(): void {
+    this.map.clear();
+  }
 }
 
 export class HttpClient {
@@ -95,7 +107,10 @@ export class HttpClient {
   async request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
     const url = this.buildUrl(path, options.query);
     const method = options.method ?? "GET";
-    const headers: Record<string, string> = { "Content-Type": "application/json", ...options.headers };
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...options.headers,
+    };
 
     if (!options.skipAuth) {
       await this.maybeRefresh();
@@ -160,7 +175,7 @@ export class HttpClient {
 
   /** Build a URL with a query-string. Skips undefined values. */
   buildUrl(path: string, query?: RequestOptions["query"]): string {
-    const url = new URL(path, this.baseUrl + "/");
+    const url = new URL(path, `${this.baseUrl}/`);
     if (query) {
       for (const [k, v] of Object.entries(query)) {
         if (v === undefined) continue;
@@ -170,7 +185,11 @@ export class HttpClient {
     return url.toString();
   }
 
-  private async handleResponse<T>(res: Response, path: string, options: RequestOptions): Promise<T> {
+  private async handleResponse<T>(
+    res: Response,
+    path: string,
+    options: RequestOptions,
+  ): Promise<T> {
     if (res.status === 429) {
       const retryAfter = parseFloat(res.headers.get("retry-after") ?? "1");
       const retryAfterMs = Math.min(Number.isFinite(retryAfter) ? retryAfter * 1000 : 1000, 10_000);
@@ -181,9 +200,17 @@ export class HttpClient {
     let data: unknown = null;
     const ct = res.headers.get("content-type") ?? "";
     if (ct.includes("application/json")) {
-      try { data = await res.json(); } catch { data = null; }
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
     } else if (ct.includes("text/")) {
-      try { data = await res.text(); } catch { data = null; }
+      try {
+        data = await res.text();
+      } catch {
+        data = null;
+      }
     }
 
     if (res.status === 401) {
@@ -197,7 +224,8 @@ export class HttpClient {
       this.authStore.set(null);
       throw VaultbaseError.auth("expired", extractMessage(data) ?? "Unauthorized");
     }
-    if (res.status === 403) throw VaultbaseError.auth("forbidden", extractMessage(data) ?? "Forbidden");
+    if (res.status === 403)
+      throw VaultbaseError.auth("forbidden", extractMessage(data) ?? "Forbidden");
     if (res.status === 422) {
       const details = (data as { details?: Record<string, string> } | null)?.details ?? {};
       throw VaultbaseError.validation(extractMessage(data) ?? "Validation failed", details);
@@ -207,7 +235,8 @@ export class HttpClient {
       const etag = res.headers.get("etag") ?? undefined;
       throw VaultbaseError.preconditionFailed(extractMessage(data) ?? "Precondition Failed", etag);
     }
-    if (!res.ok) throw VaultbaseError.server(res.status, extractMessage(data) ?? `HTTP ${res.status}`, data);
+    if (!res.ok)
+      throw VaultbaseError.server(res.status, extractMessage(data) ?? `HTTP ${res.status}`, data);
 
     // Server uses a `{ data: T }` envelope for single-result endpoints. List
     // endpoints return the page envelope `{ data: T[], page, perPage, ... }`
@@ -216,7 +245,7 @@ export class HttpClient {
       const obj = data as Record<string, unknown>;
       const ENVELOPE_KEYS = new Set(["data", "error", "code", "details"]);
       const hasOtherKeys = Object.keys(obj).some((k) => !ENVELOPE_KEYS.has(k));
-      if (!hasOtherKeys) return obj["data"] as T;
+      if (!hasOtherKeys) return obj.data as T;
     }
     return data as T;
   }
@@ -247,6 +276,9 @@ function mergeSignals(a?: AbortSignal, b?: AbortSignal): AbortSignal {
   const ctrl = new AbortController();
   const onAbort = () => ctrl.abort();
   if (a.aborted || b.aborted) ctrl.abort();
-  else { a.addEventListener("abort", onAbort); b.addEventListener("abort", onAbort); }
+  else {
+    a.addEventListener("abort", onAbort);
+    b.addEventListener("abort", onAbort);
+  }
   return ctrl.signal;
 }

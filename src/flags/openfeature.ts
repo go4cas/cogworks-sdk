@@ -89,8 +89,12 @@ function resolveTyped<T extends boolean | string | number>(
   }
   const v = all[flagKey];
   if (typeof v !== expected) {
-    return { value: defaultValue, reason: "ERROR", errorCode: "TYPE_MISMATCH",
-             errorMessage: `expected ${expected}, got ${typeof v}` };
+    return {
+      value: defaultValue,
+      reason: "ERROR",
+      errorCode: "TYPE_MISMATCH",
+      errorMessage: `expected ${expected}, got ${typeof v}`,
+    };
   }
   return { value: v as T, reason: "TARGETING_MATCH" };
 }
@@ -104,21 +108,35 @@ function resolveTyped<T extends boolean | string | number>(
 function contextForFlags(ctx: EvaluationContext): Record<string, unknown> {
   const out: Record<string, unknown> = { ...ctx };
   if (ctx.targetingKey) {
-    const user = (out["user"] as Record<string, unknown> | undefined) ?? {};
-    if (!user["id"]) user["id"] = ctx.targetingKey;
-    out["user"] = user;
+    const user = (out.user as Record<string, unknown> | undefined) ?? {};
+    if (!user.id) user.id = ctx.targetingKey;
+    out.user = user;
   }
   delete out.targetingKey;
   return out;
 }
 
-function createEventEmitter(): { emit(event: string): void; on(event: string, cb: () => void): void } {
+function createEventEmitter(): {
+  emit(event: string): void;
+  on(event: string, cb: () => void): void;
+} {
   const handlers = new Map<string, Set<() => void>>();
   return {
-    emit(event) { handlers.get(event)?.forEach((h) => { try { h(); } catch { /* noop */ } }); },
+    emit(event) {
+      handlers.get(event)?.forEach((h) => {
+        try {
+          h();
+        } catch {
+          /* noop */
+        }
+      });
+    },
     on(event, cb) {
       let set = handlers.get(event);
-      if (!set) { set = new Set(); handlers.set(event, set); }
+      if (!set) {
+        set = new Set();
+        handlers.set(event, set);
+      }
       set.add(cb);
     },
   };
