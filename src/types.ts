@@ -1,6 +1,6 @@
 /**
  * Shared schema types. The codegen CLI emits a `Schema` type matching this
- * shape; users pass it as a generic to `new Vaultbase<Schema>()` for
+ * shape; users pass it as a generic to `new Cogworks<Schema>()` for
  * IntelliSense throughout the SDK.
  */
 

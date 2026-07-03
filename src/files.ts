@@ -1,6 +1,6 @@
 import type { HttpClient } from "./client.ts";
 import type { FileMeta, UploadOptions } from "./types.ts";
-import { VaultbaseError } from "./errors.ts";
+import { CogworksError } from "./errors.ts";
 
 interface TokenResponse {
   token: string;
@@ -122,8 +122,8 @@ export class Files {
         const onAbort = () => xhr.abort();
         opts.signal.addEventListener("abort", onAbort);
       }
-      xhr.onerror = () => reject(VaultbaseError.network("Upload failed"));
-      xhr.onabort = () => reject(VaultbaseError.aborted());
+      xhr.onerror = () => reject(CogworksError.network("Upload failed"));
+      xhr.onabort = () => reject(CogworksError.aborted());
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           let parsed: unknown;
@@ -135,7 +135,7 @@ export class Files {
           const data = (parsed as { data?: unknown } | null)?.data ?? parsed;
           resolve(data);
         } else if (xhr.status === 401 || xhr.status === 403) {
-          reject(VaultbaseError.auth(xhr.status === 401 ? "expired" : "forbidden"));
+          reject(CogworksError.auth(xhr.status === 401 ? "expired" : "forbidden"));
         } else if (xhr.status === 422) {
           let parsed: { details?: Record<string, string>; error?: string } | null = null;
           try {
@@ -144,10 +144,10 @@ export class Files {
             /* noop */
           }
           reject(
-            VaultbaseError.validation(parsed?.error ?? "Validation failed", parsed?.details ?? {}),
+            CogworksError.validation(parsed?.error ?? "Validation failed", parsed?.details ?? {}),
           );
         } else {
-          reject(VaultbaseError.server(xhr.status, `HTTP ${xhr.status}`));
+          reject(CogworksError.server(xhr.status, `HTTP ${xhr.status}`));
         }
       };
       xhr.send(body);

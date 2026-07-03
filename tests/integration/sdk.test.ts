@@ -1,12 +1,12 @@
 /**
- * Live-server roundtrip. Spins a real Vaultbase, exercises the SDK end-to-end.
+ * Live-server roundtrip. Spins a real Cogworks, exercises the SDK end-to-end.
  *
- * Skipped automatically when the sibling vaultbase server source is not
+ * Skipped automatically when the sibling cogworks server source is not
  * resolvable (e.g., on a standalone clone of the SDK repo).
  */
 
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { Vaultbase } from "../../src/index.ts";
+import { Cogworks } from "../../src/index.ts";
 import { generateTypes, type SnapshotShape } from "../../src/codegen/generate.ts";
 import { MemoryAuthStore } from "../../src/auth/store.ts";
 import { startTestServer, serverAvailable } from "./server.ts";
@@ -15,7 +15,7 @@ const RUN = serverAvailable();
 const d = RUN ? describe : describe.skip;
 
 let server: Awaited<ReturnType<typeof startTestServer>>;
-let vb: Vaultbase;
+let vb: Cogworks;
 
 interface PostRecord {
   id: string;
@@ -24,10 +24,10 @@ interface PostRecord {
   cover?: string;
 }
 
-d("integration — SDK ↔ live Vaultbase", () => {
+d("integration — SDK ↔ live Cogworks", () => {
   beforeAll(async () => {
     server = await startTestServer();
-    vb = new Vaultbase({
+    vb = new Cogworks({
       baseUrl: server.baseUrl,
       authStore: new MemoryAuthStore(),
       withCredentials: false,
@@ -147,7 +147,7 @@ d("integration — SDK ↔ live Vaultbase", () => {
   });
 
   it("error model: 401 → kind=auth", async () => {
-    const anon = new Vaultbase({
+    const anon = new Cogworks({
       baseUrl: server.baseUrl,
       authStore: new MemoryAuthStore(),
       withCredentials: false,

@@ -1,4 +1,4 @@
-import { VaultbaseError } from "./errors.ts";
+import { CogworksError } from "./errors.ts";
 import { CancelRegistry } from "./cancel.ts";
 import type { AuthStore } from "./auth/store.ts";
 import { RefreshCoordinator } from "./auth/refresh.ts";
@@ -62,7 +62,7 @@ const REFRESH_LEAD_SECONDS = 60;
  * the SDK sees an `ETag` response header on a `/api/v1/<collection>/<id>` path,
  * and consumed by `Collection.update` / `.delete` to auto-attach `If-Match`.
  *
- * In-memory only — pinned to the client instance, so concurrent `Vaultbase`
+ * In-memory only — pinned to the client instance, so concurrent `Cogworks`
  * objects don't share state. SDK consumers can clear via `vb.client.etags.clear()`.
  */
 export class EtagCache {
@@ -103,7 +103,7 @@ export class HttpClient {
     this.refresher = new RefreshCoordinator(this);
   }
 
-  /** Raw HTTP request. Translates status codes into `VaultbaseError`. */
+  /** Raw HTTP request. Translates status codes into `CogworksError`. */
   async request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
     const url = this.buildUrl(path, options.query);
     const method = options.method ?? "GET";
@@ -145,9 +145,9 @@ export class HttpClient {
       res = await this.fetcher(url, init);
     } catch (e) {
       if (cancelKey && signal?.aborted) {
-        throw VaultbaseError.aborted();
+        throw CogworksError.aborted();
       }
-      throw VaultbaseError.network(e instanceof Error ? e.message : String(e), e);
+      throw CogworksError.network(e instanceof Error ? e.message : String(e), e);
     } finally {
       if (cancelKey && signal) this.cancel.release(cancelKey, signal);
     }
@@ -194,7 +194,7 @@ export class HttpClient {
       const retryAfter = parseFloat(res.headers.get("retry-after") ?? "1");
       const retryAfterMs = Math.min(Number.isFinite(retryAfter) ? retryAfter * 1000 : 1000, 10_000);
       // Auth-refresh path is special-cased upstream; here we just throw.
-      throw VaultbaseError.rateLimit(retryAfterMs);
+      throw CogworksError.rateLimit(retryAfterMs);
     }
 
     let data: unknown = null;
@@ -222,21 +222,21 @@ export class HttpClient {
         }
       }
       this.authStore.set(null);
-      throw VaultbaseError.auth("expired", extractMessage(data) ?? "Unauthorized");
+      throw CogworksError.auth("expired", extractMessage(data) ?? "Unauthorized");
     }
     if (res.status === 403)
-      throw VaultbaseError.auth("forbidden", extractMessage(data) ?? "Forbidden");
+      throw CogworksError.auth("forbidden", extractMessage(data) ?? "Forbidden");
     if (res.status === 422) {
       const details = (data as { details?: Record<string, string> } | null)?.details ?? {};
-      throw VaultbaseError.validation(extractMessage(data) ?? "Validation failed", details);
+      throw CogworksError.validation(extractMessage(data) ?? "Validation failed", details);
     }
-    if (res.status === 409) throw VaultbaseError.conflict(409, extractMessage(data) ?? "Conflict");
+    if (res.status === 409) throw CogworksError.conflict(409, extractMessage(data) ?? "Conflict");
     if (res.status === 412) {
       const etag = res.headers.get("etag") ?? undefined;
-      throw VaultbaseError.preconditionFailed(extractMessage(data) ?? "Precondition Failed", etag);
+      throw CogworksError.preconditionFailed(extractMessage(data) ?? "Precondition Failed", etag);
     }
     if (!res.ok)
-      throw VaultbaseError.server(res.status, extractMessage(data) ?? `HTTP ${res.status}`, data);
+      throw CogworksError.server(res.status, extractMessage(data) ?? `HTTP ${res.status}`, data);
 
     // Server uses a `{ data: T }` envelope for single-result endpoints. List
     // endpoints return the page envelope `{ data: T[], page, perPage, ... }`

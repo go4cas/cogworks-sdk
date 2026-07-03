@@ -1,22 +1,22 @@
-# @vaultbase/sdk
+# @cogworks/sdk
 
-Official TypeScript SDK for [Vaultbase](https://vaultbase.dev) — a typed
+Official TypeScript SDK for [Cogworks](https://cogworks.dev) — a typed
 REST + WebSocket / SSE client. Zero runtime dependencies, ESM + CJS dual
 build, works in browsers, Node 18+, Bun, and Deno.
 
 ```bash
-npm install @vaultbase/sdk
+npm install @cogworks/sdk
 # or
-bun add @vaultbase/sdk
+bun add @cogworks/sdk
 ```
 
 ## Quick start
 
 ```ts
-import { Vaultbase } from "@vaultbase/sdk";
-import type { Schema } from "./vaultbase-schema.gen";  // optional, from codegen
+import { Cogworks } from "@cogworks/sdk";
+import type { Schema } from "./cogworks-schema.gen";  // optional, from codegen
 
-const vb = new Vaultbase<Schema>({ baseUrl: "https://api.example.com" });
+const vb = new Cogworks<Schema>({ baseUrl: "https://api.example.com" });
 
 // Auth
 const { token, record } = await vb.auth.users.login({
@@ -63,7 +63,7 @@ Tagged-template filter that handles encoding + escaping per JS type. Stops
 quote-bug + injection-shaped mistakes at the type system layer.
 
 ```ts
-import { Vaultbase, field } from "@vaultbase/sdk";
+import { Cogworks, field } from "@cogworks/sdk";
 
 const term = req.query.q;
 const filter = vb.q`title ~ ${term} && status = ${"published"} && deleted = ${false}`;
@@ -104,7 +104,7 @@ await vb.collection("posts").update("p1", { title: "new" });
 //     If-Match: W/"<cached>"
 //
 // If the record changed since the get, the server returns 412 and the SDK
-// throws VaultbaseError(kind: "precondition_failed", currentEtag).
+// throws CogworksError(kind: "precondition_failed", currentEtag).
 ```
 
 Per-call overrides:
@@ -120,7 +120,7 @@ Catching the conflict:
 try {
   await coll.update("p1", body);
 } catch (e) {
-  if (isVaultbaseError(e) && e.kind === "precondition_failed") {
+  if (isCogworksError(e) && e.kind === "precondition_failed") {
     const fresh = await coll.get("p1");
     // …re-merge edits, retry…
   }
@@ -130,7 +130,7 @@ try {
 A successful `delete` clears the cached entry so a subsequent re-create
 doesn't carry the stale tag forward.
 
-## Codegen — `vb-types`
+## Codegen — `cw-types`
 
 Snapshot mode (recommended):
 
@@ -138,36 +138,36 @@ Snapshot mode (recommended):
 # One-time: capture the schema
 curl -H "Authorization: Bearer $ADMIN_TOKEN" \
   https://api.example.com/api/v1/admin/migrations/snapshot \
-  > vaultbase-schema.json
+  > cogworks-schema.json
 
 # Anyone can regen types from the committed JSON, no admin token:
-npx vb-types --schema=./vaultbase-schema.json --out=./vaultbase-schema.gen.ts
+npx cw-types --schema=./cogworks-schema.json --out=./cogworks-schema.gen.ts
 ```
 
 Live mode (dev only):
 
 ```bash
-npx vb-types --url=https://api.example.com --admin-token=$VB_ADMIN
+npx cw-types --url=https://api.example.com --admin-token=$CW_ADMIN
 ```
 
-## Schema migrations — `vb-migrate`
+## Schema migrations — `cw-migrate`
 
 Diff and apply schema snapshots between environments. Three subcommands hit
 the existing `/api/v1/admin/migrations/{snapshot,diff,apply}` endpoints.
 
 ```bash
 # Pull a snapshot from prod
-npx vb-migrate pull \
+npx cw-migrate pull \
   --url=https://prod.example.com --admin-token=$PROD \
   --out=./schema.json
 
 # Diff against staging
-npx vb-migrate diff \
+npx cw-migrate diff \
   --url=https://staging.example.com --admin-token=$STAGING \
   --schema=./schema.json
 
 # Apply (requires --yes; refuses in non-interactive contexts otherwise)
-npx vb-migrate apply \
+npx cw-migrate apply \
   --url=https://staging.example.com --admin-token=$STAGING \
   --schema=./schema.json --mode=additive --yes
 ```
@@ -180,10 +180,10 @@ Flags:
 - `--yes` / `-y` — required for non-interactive apply
 - `--dry-run` — diff + plan, exit before writing
 
-Programmatic API at `@vaultbase/sdk/migrate`:
+Programmatic API at `@cogworks/sdk/migrate`:
 
 ```ts
-import { pullSnapshot, diffSnapshot, applySnapshot } from "@vaultbase/sdk/migrate";
+import { pullSnapshot, diffSnapshot, applySnapshot } from "@cogworks/sdk/migrate";
 
 const snap = await pullSnapshot({ url, adminToken });
 const diff = await diffSnapshot(snap, { url: targetUrl, adminToken });
@@ -199,16 +199,16 @@ tab close — XSS-safer than `localStorage`). Default off-browser is
 `MemoryAuthStore`.
 
 ```ts
-import { LocalStorageAuthStore, CookieAuthStore } from "@vaultbase/sdk";
+import { LocalStorageAuthStore, CookieAuthStore } from "@cogworks/sdk";
 
-const vb = new Vaultbase({
+const vb = new Cogworks({
   baseUrl,
   // For cross-tab persistence (XSS exposure caveat applies):
   authStore: new LocalStorageAuthStore(),
 });
 
 // SSR / cookie deployments — host writes the HttpOnly cookie:
-const vb2 = new Vaultbase({
+const vb2 = new Cogworks({
   baseUrl,
   authStore: new CookieAuthStore(),
   authTransport: "cookie-only",
@@ -217,16 +217,16 @@ const vb2 = new Vaultbase({
 
 ## Error handling
 
-Every call rejects with a `VaultbaseError`. Switch on `kind` instead of
+Every call rejects with a `CogworksError`. Switch on `kind` instead of
 string-matching:
 
 ```ts
-import { isVaultbaseError } from "@vaultbase/sdk";
+import { isCogworksError } from "@cogworks/sdk";
 
 try {
   await vb.collection("posts").create({});
 } catch (e) {
-  if (!isVaultbaseError(e)) throw e;
+  if (!isCogworksError(e)) throw e;
   switch (e.kind) {
     case "validation":          showFieldErrors(e.data.details); break;
     case "auth":                redirectToLogin(); break;
@@ -269,14 +269,14 @@ origin. SDK surfaces upgrade rejection as `{ kind: "auth", reason: "forbidden" }
 
 | Import | Purpose |
 |---|---|
-| `@vaultbase/sdk` | Main client + auth + records + filter + batch |
-| `@vaultbase/sdk/realtime` | Standalone realtime manager (advanced — `vb.subscribe` covers the common case) |
-| `@vaultbase/sdk/codegen` | Programmatic schema → TS code generation |
-| `@vaultbase/sdk/migrate` | `pullSnapshot` / `diffSnapshot` / `applySnapshot` for env-to-env workflows |
+| `@cogworks/sdk` | Main client + auth + records + filter + batch |
+| `@cogworks/sdk/realtime` | Standalone realtime manager (advanced — `vb.subscribe` covers the common case) |
+| `@cogworks/sdk/codegen` | Programmatic schema → TS code generation |
+| `@cogworks/sdk/migrate` | `pullSnapshot` / `diffSnapshot` / `applySnapshot` for env-to-env workflows |
 
 ## Versioning
 
-SDK semver is independent of the server. The `vaultbaseServerCompat`
+SDK semver is independent of the server. The `cogworksServerCompat`
 field in `package.json` advertises the supported server range. SDK
 patch / minor releases never require a server upgrade.
 

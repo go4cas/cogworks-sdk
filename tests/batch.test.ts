@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { Batch } from "../src/batch.ts";
 import { HttpClient } from "../src/client.ts";
 import { MemoryAuthStore } from "../src/auth/store.ts";
-import { VaultbaseError } from "../src/errors.ts";
+import { CogworksError } from "../src/errors.ts";
 
 function client(handler?: (req: Request) => Response): HttpClient {
   return new HttpClient({
@@ -39,8 +39,8 @@ describe("Batch", () => {
       await b.run();
       throw new Error("should not run");
     } catch (e) {
-      expect(e instanceof VaultbaseError).toBe(true);
-      expect((e as VaultbaseError).kind).toBe("validation");
+      expect(e instanceof CogworksError).toBe(true);
+      expect((e as CogworksError).kind).toBe("validation");
     }
   });
 

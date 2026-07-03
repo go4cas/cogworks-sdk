@@ -1,7 +1,7 @@
 /**
  * Tagged-template filter builder. Produces a `Filter`-branded string with
  * interpolated values escaped + quoted per the server's filter expression
- * grammar (see `vaultbase/src/core/expression.ts`).
+ * grammar (see `cogworks/src/core/expression.ts`).
  *
  *   const f = q`title ~ ${term} && status = ${"published"}`;
  *   posts.list({ filter: f });

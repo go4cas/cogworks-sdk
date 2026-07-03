@@ -18,7 +18,7 @@ export class RefreshCoordinator {
       try {
         this.channel = new (
           globalThis as unknown as { BroadcastChannel: typeof BroadcastChannel }
-        ).BroadcastChannel("vaultbase-refresh");
+        ).BroadcastChannel("cogworks-refresh");
         this.channel.addEventListener("message", (ev: MessageEvent<unknown>) => {
           const msg = ev.data as { type?: string; token?: string } | null;
           if (msg?.type === "refreshed" && typeof msg.token === "string") {

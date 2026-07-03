@@ -1,6 +1,6 @@
 /**
- * `vb-types` CLI. Modes:
- *   - Snapshot (default):  --schema=./vaultbase-schema.json
+ * `cw-types` CLI. Modes:
+ *   - Snapshot (default):  --schema=./cogworks-schema.json
  *   - Live (dev only):     --url=https://api.example.com --admin-token=$TOKEN
  *
  * Output is written atomically (tmp + rename) so a partial run can never
@@ -19,7 +19,7 @@ interface Args {
 }
 
 function parseArgs(argv: string[]): Args {
-  const args: Args = { out: "./vaultbase-schema.gen.ts" };
+  const args: Args = { out: "./cogworks-schema.gen.ts" };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i] ?? "";
     if (a.startsWith("--schema=")) args.schema = a.slice("--schema=".length);
@@ -48,15 +48,15 @@ function parseArgs(argv: string[]): Args {
 
 function printUsage(): void {
   process.stdout.write(
-    `vb-types — generate TypeScript types from a Vaultbase schema\n\n` +
+    `cw-types — generate TypeScript types from a Cogworks schema\n\n` +
       `Usage:\n` +
-      `  vb-types --schema=./vaultbase-schema.json [--out=./vaultbase-schema.gen.ts]\n` +
-      `  vb-types --url=https://api.example.com --admin-token=$TOKEN [--out=./types.gen.ts]\n\n` +
+      `  cw-types --schema=./cogworks-schema.json [--out=./cogworks-schema.gen.ts]\n` +
+      `  cw-types --url=https://api.example.com --admin-token=$TOKEN [--out=./types.gen.ts]\n\n` +
       `Snapshot mode is the default and recommended for CI. Snapshot the schema\n` +
       `via:\n` +
       `  curl -H "Authorization: Bearer $ADMIN" \\\n` +
       `    https://api.example.com/api/v1/admin/migrations/snapshot \\\n` +
-      `    > vaultbase-schema.json\n` +
+      `    > cogworks-schema.json\n` +
       `Then commit the JSON. Anyone can regen types from it without secrets.\n`,
   );
 }
@@ -102,10 +102,10 @@ async function main(): Promise<void> {
   const tmp = `${outAbs}.tmp`;
   await fs.writeFile(tmp, ts, "utf8");
   await fs.rename(tmp, outAbs);
-  process.stdout.write(`vb-types: wrote ${outAbs} (${snapshot.collections.length} collections)\n`);
+  process.stdout.write(`cw-types: wrote ${outAbs} (${snapshot.collections.length} collections)\n`);
 }
 
 main().catch((e: unknown) => {
-  process.stderr.write(`vb-types: ${e instanceof Error ? e.message : String(e)}\n`);
+  process.stderr.write(`cw-types: ${e instanceof Error ? e.message : String(e)}\n`);
   process.exit(1);
 });

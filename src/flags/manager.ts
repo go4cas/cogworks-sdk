@@ -8,7 +8,7 @@
  *     re-render on flag updates
  *
  * Trust model: the SDK sends the operator-supplied `context` at eval time;
- * vaultbase doesn't infer it. For server-side hooks/routes, prefer the
+ * cogworks doesn't infer it. For server-side hooks/routes, prefer the
  * server-side `ctx.helpers.flags` API which uses the verified caller as
  * context.
  */

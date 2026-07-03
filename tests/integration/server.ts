@@ -1,5 +1,5 @@
 /**
- * Spins up a real Vaultbase server in-process for integration tests.
+ * Spins up a real Cogworks server in-process for integration tests.
  *
  * IMPORTANT: This file is dev-only. The SDK ships without `tests/` so the
  * sibling-dir import path here only resolves in the monorepo. When the SDK
@@ -53,11 +53,11 @@ async function loadServer(): Promise<NonNullable<typeof cachedImports>> {
 
 export async function startTestServer(): Promise<Started> {
   const dataDir = mkdtempSync(join(tmpdir(), "vbsdk-it-"));
-  process.env.VAULTBASE_DATA_DIR = dataDir;
+  process.env.COGWORKS_DATA_DIR = dataDir;
   // Deterministic secret so signed JWTs survive multiple verifies in test.
-  process.env.VAULTBASE_JWT_SECRET = "test-jwt-secret-do-not-use-in-prod";
+  process.env.COGWORKS_JWT_SECRET = "test-jwt-secret-do-not-use-in-prod";
   // Disable rate limiting so test bursts don't 429 themselves.
-  process.env.VAULTBASE_RATE_ENABLED = "0";
+  process.env.COGWORKS_RATE_ENABLED = "0";
 
   const mod = await loadServer();
   const cfg = await mod.loadConfig();

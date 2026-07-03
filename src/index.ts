@@ -19,19 +19,19 @@ import type {
   SubscribeFilter,
 } from "./types.ts";
 
-export interface VaultbaseOptions extends Partial<Omit<ClientOptions, "baseUrl">> {
+export interface CogworksOptions extends Partial<Omit<ClientOptions, "baseUrl">> {
   baseUrl: string;
 }
 
 /**
  * Top-level SDK entry. Generic param `S` is a `Schema` map emitted by
- * `vb-types`; defaults to a permissive shape so apps can opt out of
+ * `cw-types`; defaults to a permissive shape so apps can opt out of
  * codegen and still compile.
  *
- *   const vb = new Vaultbase<Schema>({ baseUrl: "https://api.example.com" });
+ *   const vb = new Cogworks<Schema>({ baseUrl: "https://api.example.com" });
  *   const post = await vb.collection("posts").create({ title: "hi" });
  */
-export class Vaultbase<S extends DefaultSchema = DefaultSchema> {
+export class Cogworks<S extends DefaultSchema = DefaultSchema> {
   readonly client: HttpClient;
   readonly auth: AuthInterface<S>;
   readonly files: Files;
@@ -39,7 +39,7 @@ export class Vaultbase<S extends DefaultSchema = DefaultSchema> {
   readonly realtime: RealtimeManager;
   readonly flags: FlagsClient;
 
-  constructor(opts: VaultbaseOptions) {
+  constructor(opts: CogworksOptions) {
     const authStore: AuthStore = opts.authStore ?? defaultAuthStore();
     const clientOpts: ClientOptions = { baseUrl: opts.baseUrl, authStore };
     if (opts.fetch) clientOpts.fetch = opts.fetch;
@@ -164,9 +164,9 @@ export {
   type StoredAuth,
 } from "./auth/store.ts";
 export {
-  VaultbaseError,
-  isVaultbaseError,
-  type VaultbaseErrorData,
+  CogworksError,
+  isCogworksError,
+  type CogworksErrorData,
   type ErrorKind,
 } from "./errors.ts";
 export type {
