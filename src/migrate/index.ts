@@ -1,5 +1,5 @@
 /**
- * Programmatic migration helpers — used by the `vb-migrate` CLI and by
+ * Programmatic migration helpers — used by the `cw-migrate` CLI and by
  * deploy scripts that want to wire schema apply into CI without the
  * interactive UI.
  *

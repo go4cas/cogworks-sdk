@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { HttpClient, decodeJwtPayload } from "../src/client.ts";
 import { MemoryAuthStore } from "../src/auth/store.ts";
-import { VaultbaseError } from "../src/errors.ts";
+import { CogworksError } from "../src/errors.ts";
 
 function makeClient(handler: (req: Request) => Response | Promise<Response>): HttpClient {
   return new HttpClient({
@@ -41,7 +41,7 @@ describe("HttpClient.request", () => {
     expect(r.id).toBe("x");
   });
 
-  it("translates 422 into a VaultbaseError of kind=validation", async () => {
+  it("translates 422 into a CogworksError of kind=validation", async () => {
     const c = makeClient(
       () =>
         new Response(JSON.stringify({ error: "bad", details: { email: "required" } }), {
@@ -53,8 +53,8 @@ describe("HttpClient.request", () => {
       await c.request("/api/v1/posts", { method: "POST", body: {} });
       throw new Error("should have thrown");
     } catch (e) {
-      expect(e instanceof VaultbaseError).toBe(true);
-      const err = e as VaultbaseError;
+      expect(e instanceof CogworksError).toBe(true);
+      const err = e as CogworksError;
       expect(err.kind).toBe("validation");
       if (err.data.kind === "validation") {
         expect(err.data.details.email).toBe("required");
@@ -73,8 +73,8 @@ describe("HttpClient.request", () => {
     try {
       await c.request("/api/v1/x");
     } catch (e) {
-      expect(e instanceof VaultbaseError).toBe(true);
-      const err = e as VaultbaseError;
+      expect(e instanceof CogworksError).toBe(true);
+      const err = e as CogworksError;
       expect(err.kind).toBe("rate_limit");
       if (err.data.kind === "rate_limit") {
         expect(err.data.retryAfterMs).toBe(2000);

@@ -1,5 +1,5 @@
 /**
- * Discriminated error union. Every SDK call rejects with a `VaultbaseError`
+ * Discriminated error union. Every SDK call rejects with a `CogworksError`
  * carrying a `kind` so apps can `switch` instead of string-matching.
  */
 
@@ -56,7 +56,7 @@ export interface PreconditionFailedErrorData {
   currentEtag?: string;
 }
 
-export type VaultbaseErrorData =
+export type CogworksErrorData =
   | NetworkErrorData
   | AuthErrorData
   | ValidationErrorData
@@ -66,60 +66,60 @@ export type VaultbaseErrorData =
   | ServerErrorData
   | AbortedErrorData;
 
-export class VaultbaseError extends Error {
+export class CogworksError extends Error {
   readonly kind: ErrorKind;
-  readonly data: VaultbaseErrorData;
+  readonly data: CogworksErrorData;
 
-  constructor(data: VaultbaseErrorData) {
+  constructor(data: CogworksErrorData) {
     super(data.message);
-    this.name = "VaultbaseError";
+    this.name = "CogworksError";
     this.kind = data.kind;
     this.data = data;
-    Object.setPrototypeOf(this, VaultbaseError.prototype);
+    Object.setPrototypeOf(this, CogworksError.prototype);
   }
 
-  static network(message: string, cause?: unknown): VaultbaseError {
-    return new VaultbaseError({
+  static network(message: string, cause?: unknown): CogworksError {
+    return new CogworksError({
       kind: "network",
       message,
       ...(cause !== undefined ? { cause } : {}),
     });
   }
-  static auth(reason: AuthErrorData["reason"], message?: string): VaultbaseError {
-    return new VaultbaseError({
+  static auth(reason: AuthErrorData["reason"], message?: string): CogworksError {
+    return new CogworksError({
       kind: "auth",
       reason,
       message: message ?? `Authentication failed: ${reason}`,
     });
   }
-  static validation(message: string, details: Record<string, string> = {}): VaultbaseError {
-    return new VaultbaseError({ kind: "validation", message, details });
+  static validation(message: string, details: Record<string, string> = {}): CogworksError {
+    return new CogworksError({ kind: "validation", message, details });
   }
-  static rateLimit(retryAfterMs: number, message = "Rate limited"): VaultbaseError {
-    return new VaultbaseError({ kind: "rate_limit", message, retryAfterMs });
+  static rateLimit(retryAfterMs: number, message = "Rate limited"): CogworksError {
+    return new CogworksError({ kind: "rate_limit", message, retryAfterMs });
   }
-  static conflict(serverCode: 409 | 422, message: string): VaultbaseError {
-    return new VaultbaseError({ kind: "conflict", message, serverCode });
+  static conflict(serverCode: 409 | 422, message: string): CogworksError {
+    return new CogworksError({ kind: "conflict", message, serverCode });
   }
-  static server(status: number, message: string, body?: unknown): VaultbaseError {
-    return new VaultbaseError({
+  static server(status: number, message: string, body?: unknown): CogworksError {
+    return new CogworksError({
       kind: "server",
       message,
       status,
       ...(body !== undefined ? { body } : {}),
     });
   }
-  static aborted(message = "Request aborted"): VaultbaseError {
-    return new VaultbaseError({ kind: "aborted", message });
+  static aborted(message = "Request aborted"): CogworksError {
+    return new CogworksError({ kind: "aborted", message });
   }
-  static preconditionFailed(message = "Precondition Failed", currentEtag?: string): VaultbaseError {
+  static preconditionFailed(message = "Precondition Failed", currentEtag?: string): CogworksError {
     const data: PreconditionFailedErrorData = { kind: "precondition_failed", message };
     if (currentEtag !== undefined) data.currentEtag = currentEtag;
-    return new VaultbaseError(data);
+    return new CogworksError(data);
   }
 }
 
 /** Convenience type-guard. */
-export function isVaultbaseError(e: unknown): e is VaultbaseError {
-  return e instanceof VaultbaseError;
+export function isCogworksError(e: unknown): e is CogworksError {
+  return e instanceof CogworksError;
 }

@@ -1,7 +1,7 @@
 {
-  "name": "@vaultbase/sdk",
+  "name": "@cogworks/sdk",
   "version": "0.3.0",
-  "description": "Official TypeScript SDK for Vaultbase \u2014 typed REST + WS/SSE client",
+  "description": "Official TypeScript SDK for Cogworks \u2014 typed REST + WS/SSE client",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -47,16 +47,16 @@
     }
   },
   "bin": {
-    "vb-types": "./dist/codegen/bin.js",
-    "vb-migrate": "./dist/migrate/bin.js",
-    "vb-flags": "./dist/codegen/flags-bin.js"
+    "cw-types": "./dist/codegen/bin.js",
+    "cw-migrate": "./dist/migrate/bin.js",
+    "cw-flags": "./dist/codegen/flags-bin.js"
   },
   "files": [
     "dist",
     "README.md",
     "LICENSE"
   ],
-  "vaultbaseServerCompat": ">=0.1 <2.0",
+  "cogworksServerCompat": ">=0.1 <2.0",
   "scripts": {
     "build": "tsup",
     "test": "bun test",
@@ -66,7 +66,7 @@
     "prepublishOnly": "bun run typecheck && bun run test && bun run build"
   },
   "keywords": [
-    "vaultbase",
+    "cogworks",
     "baas",
     "sdk",
     "typescript",

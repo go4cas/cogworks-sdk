@@ -1,13 +1,13 @@
 /**
- * OpenFeature provider for vaultbase. Drop-in for both
+ * OpenFeature provider for cogworks. Drop-in for both
  * `@openfeature/server-sdk` and `@openfeature/web-sdk`. Avoids hard
  * dependency on either by typing against a structurally-compatible
  * interface and casting at the call site.
  *
  *   import { OpenFeature } from "@openfeature/server-sdk";
- *   import { VaultbaseFlagsProvider } from "@vaultbase/sdk/openfeature";
+ *   import { CogworksFlagsProvider } from "@cogworks/sdk/openfeature";
  *
- *   await OpenFeature.setProviderAndWait(new VaultbaseFlagsProvider(vb.flags));
+ *   await OpenFeature.setProviderAndWait(new CogworksFlagsProvider(vb.flags));
  *   const client = OpenFeature.getClient();
  *   const enabled = await client.getBooleanValue("new_checkout", false);
  *
@@ -32,8 +32,8 @@ interface EvaluationContext {
   [key: string]: unknown;
 }
 
-export class VaultbaseFlagsProvider {
-  readonly metadata = { name: "vaultbase" };
+export class CogworksFlagsProvider {
+  readonly metadata = { name: "cogworks" };
   readonly runsOn: "server" | "client" = "client";
   readonly events = createEventEmitter();
   private context: EvaluationContext = {};

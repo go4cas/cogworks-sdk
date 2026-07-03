@@ -1,7 +1,7 @@
 /**
  * React hooks for FlagsClient.
  *
- *   import { useFlag } from "@vaultbase/sdk/flags/react";
+ *   import { useFlag } from "@cogworks/sdk/flags/react";
  *   const enabled = useFlag(vb.flags, "new_checkout", false);
  *   const variant = useFlagString(vb.flags, "checkout_variant", "control");
  *

@@ -49,7 +49,7 @@ interface BrowserStorageLike {
 
 abstract class WebStorageAuthStore implements AuthStore {
   protected abstract storage(): BrowserStorageLike | null;
-  constructor(protected readonly key = "vaultbase_auth") {}
+  constructor(protected readonly key = "cogworks_auth") {}
 
   get(): StoredAuth | null {
     const s = this.storage();

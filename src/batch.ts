@@ -1,5 +1,5 @@
 import type { HttpClient } from "./client.ts";
-import { VaultbaseError } from "./errors.ts";
+import { CogworksError } from "./errors.ts";
 import type { AnyRecord, DefaultSchema, ListOptions, ListResponse } from "./types.ts";
 
 const MAX_OPS = 100;
@@ -99,7 +99,7 @@ export class Batch<
   async run(): Promise<R> {
     if (this.ops.length === 0) return [] as unknown as R;
     if (this.ops.length > MAX_OPS) {
-      throw VaultbaseError.validation(`Batch exceeds ${MAX_OPS} ops`, {
+      throw CogworksError.validation(`Batch exceeds ${MAX_OPS} ops`, {
         batch: `Got ${this.ops.length} ops`,
       });
     }

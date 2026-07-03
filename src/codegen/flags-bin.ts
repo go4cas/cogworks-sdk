@@ -1,8 +1,8 @@
 /**
- * `vb-flags` CLI. Reads flag definitions from a running vaultbase admin
+ * `cw-flags` CLI. Reads flag definitions from a running cogworks admin
  * API, emits a `flags.gen.ts` augmenting the SDK's `FlagSchema` interface.
  *
- *   vb-flags --url=https://api.example.com --admin-token=$TOKEN > flags.gen.ts
+ *   cw-flags --url=https://api.example.com --admin-token=$TOKEN > flags.gen.ts
  */
 import { promises as fs } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -40,15 +40,15 @@ function parseArgs(argv: string[]): Args {
 
 function printUsage(): void {
   process.stdout.write(
-    `vb-flags — generate TypeScript types from a vaultbase server's feature flags
+    `cw-flags — generate TypeScript types from a cogworks server's feature flags
 
 Usage:
-  vb-flags --url=<server-url> --admin-token=<token> [--out=flags.gen.ts]
+  cw-flags --url=<server-url> --admin-token=<token> [--out=flags.gen.ts]
 
 Pipe to stdout when --out is - (single dash).
 
 Example:
-  vb-flags --url=https://api.example.com --admin-token=$ADMIN_TOKEN -o ./src/flags.gen.ts
+  cw-flags --url=https://api.example.com --admin-token=$ADMIN_TOKEN -o ./src/flags.gen.ts
 `,
   );
 }
@@ -68,7 +68,7 @@ async function main(): Promise<void> {
   }
   const outPath = resolve(args.out);
   await fs.mkdir(dirname(outPath), { recursive: true });
-  // Atomic write — same envelope as vb-types.
+  // Atomic write — same envelope as cw-types.
   const tmp = `${outPath}.tmp-${process.pid}`;
   await fs.writeFile(tmp, out, "utf8");
   await fs.rename(tmp, outPath);
@@ -76,6 +76,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  process.stderr.write(`vb-flags failed: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.stderr.write(`cw-flags failed: ${err instanceof Error ? err.message : String(err)}\n`);
   process.exit(1);
 });

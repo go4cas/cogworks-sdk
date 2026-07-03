@@ -1,11 +1,11 @@
 /**
- * `vb-migrate` CLI — diff / apply schema snapshots against a remote
- * Vaultbase server.
+ * `cw-migrate` CLI — diff / apply schema snapshots against a remote
+ * Cogworks server.
  *
  * Usage:
- *   vb-migrate pull  --url=<host> --admin-token=$T [--out=./schema.json]
- *   vb-migrate diff  --url=<host> --admin-token=$T --schema=./schema.json
- *   vb-migrate apply --url=<host> --admin-token=$T --schema=./schema.json
+ *   cw-migrate pull  --url=<host> --admin-token=$T [--out=./schema.json]
+ *   cw-migrate diff  --url=<host> --admin-token=$T --schema=./schema.json
+ *   cw-migrate apply --url=<host> --admin-token=$T --schema=./schema.json
  *                    [--mode=additive|sync] [--yes] [--dry-run]
  *
  * `apply` always runs a diff first and prints the plan. Without `--yes` it
@@ -77,14 +77,14 @@ function parseArgs(argv: string[]): Args {
 
 function printUsage(): void {
   process.stdout.write(
-    `vb-migrate — diff / apply Vaultbase schema snapshots\n\n` +
+    `cw-migrate — diff / apply Cogworks schema snapshots\n\n` +
       `Commands:\n` +
       `  pull   Download current schema from a server.\n` +
-      `         vb-migrate pull --url=<host> --admin-token=$T --out=./schema.json\n\n` +
+      `         cw-migrate pull --url=<host> --admin-token=$T --out=./schema.json\n\n` +
       `  diff   Compare a local snapshot with a server's current schema.\n` +
-      `         vb-migrate diff --url=<host> --admin-token=$T --schema=./schema.json\n\n` +
+      `         cw-migrate diff --url=<host> --admin-token=$T --schema=./schema.json\n\n` +
       `  apply  Apply a snapshot to a server. Always diffs first.\n` +
-      `         vb-migrate apply --url=<host> --admin-token=$T --schema=./schema.json\n` +
+      `         cw-migrate apply --url=<host> --admin-token=$T --schema=./schema.json\n` +
       `                          [--mode=additive|sync] [--yes] [--dry-run]\n\n` +
       `Modes:\n` +
       `  additive (default) — only creates missing collections/fields. Never updates.\n` +
@@ -149,12 +149,12 @@ async function cmdPull(args: Args): Promise<void> {
   const url = requireFlag("url", args.url);
   const adminToken = requireFlag("admin-token", args.adminToken);
   const snap = await pullSnapshot({ url, adminToken });
-  const outPath = resolve(args.out ?? "./vaultbase-schema.json");
+  const outPath = resolve(args.out ?? "./cogworks-schema.json");
   await fs.mkdir(dirname(outPath), { recursive: true });
   const tmp = `${outPath}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(snap, null, 2), "utf8");
   await fs.rename(tmp, outPath);
-  process.stdout.write(`vb-migrate: wrote ${outPath} (${snap.collections.length} collections)\n`);
+  process.stdout.write(`cw-migrate: wrote ${outPath} (${snap.collections.length} collections)\n`);
 }
 
 async function cmdDiff(args: Args): Promise<void> {
@@ -177,12 +177,12 @@ async function cmdApply(args: Args): Promise<void> {
   const { creates, updates } = summarizeDiff(entries);
   const hasChanges = creates.length > 0 || updates.length > 0;
   if (!hasChanges) {
-    process.stdout.write(`vb-migrate: nothing to apply.\n`);
+    process.stdout.write(`cw-migrate: nothing to apply.\n`);
     return;
   }
 
   if (args.dryRun) {
-    process.stdout.write(`vb-migrate: --dry-run — exiting before apply.\n`);
+    process.stdout.write(`cw-migrate: --dry-run — exiting before apply.\n`);
     return;
   }
   if (!args.yes) {
@@ -215,6 +215,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((e: unknown) => {
-  process.stderr.write(`vb-migrate: ${e instanceof Error ? e.message : String(e)}\n`);
+  process.stderr.write(`cw-migrate: ${e instanceof Error ? e.message : String(e)}\n`);
   process.exit(1);
 });

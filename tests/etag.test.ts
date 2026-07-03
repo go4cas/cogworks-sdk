@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { HttpClient, EtagCache } from "../src/client.ts";
 import { Collection } from "../src/collection.ts";
 import { MemoryAuthStore } from "../src/auth/store.ts";
-import { VaultbaseError } from "../src/errors.ts";
+import { CogworksError } from "../src/errors.ts";
 
 interface Captured {
   url: string;
@@ -151,7 +151,7 @@ describe("Collection auto-attaches If-Match", () => {
     expect(client.etags.get("posts", "p1")).toBeUndefined();
   });
 
-  it("412 response surfaces as VaultbaseError(precondition_failed) with currentEtag", async () => {
+  it("412 response surfaces as CogworksError(precondition_failed) with currentEtag", async () => {
     const { client } = makeClient(
       () =>
         new Response(JSON.stringify({ error: "Precondition Failed", code: 412 }), {
@@ -165,9 +165,9 @@ describe("Collection auto-attaches If-Match", () => {
       await col.update("p1", { title: "x" });
       throw new Error("should have thrown");
     } catch (e) {
-      expect(e).toBeInstanceOf(VaultbaseError);
-      expect((e as VaultbaseError).kind).toBe("precondition_failed");
-      const data = (e as VaultbaseError).data as {
+      expect(e).toBeInstanceOf(CogworksError);
+      expect((e as CogworksError).kind).toBe("precondition_failed");
+      const data = (e as CogworksError).data as {
         kind: "precondition_failed";
         currentEtag?: string;
       };
